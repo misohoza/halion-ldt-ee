@@ -1,0 +1,3640 @@
+-------------------------------------------------------------------------------
+-- Lua global variables.
+-- The basic library provides core functions to Lua. If you do not include this
+-- library in your application, you should check carefully whether you need to
+-- provide implementations for some of its facilities. 
+-- @module global
+
+------------------------------------------------------------------------------
+-- This library provides generic functions for bitwise manipulation.
+-- This is a global variable which hold the preloaded @{bit32} module.
+-- @field[parent = #global] bit32#bit32 bit32 preloaded module
+
+------------------------------------------------------------------------------
+-- The package library provides basic facilities for loading and building modules in Lua.
+-- This is a global variable which hold the preloaded @{package} module.
+-- @field[parent = #global] package#package package preloaded module
+
+------------------------------------------------------------------------------
+-- This library provides generic functions for string manipulation.
+-- This is a global variable which hold the preloaded @{string} module.
+-- @field[parent = #global] string#string string preloaded module
+
+------------------------------------------------------------------------------
+-- This library provides generic functions for table manipulation.
+-- This is a global variable which hold the preloaded @{table} module.
+-- @field[parent = #global] table#table table preloaded module
+
+------------------------------------------------------------------------------
+-- This library is an interface to the standard C math library.
+-- This is a global variable which hold the preloaded @{math} module.
+-- @field[parent = #global] math#math math preloaded module
+
+------------------------------------------------------------------------------
+-- The Debug Library.
+-- This is a  global variable which hold the preloaded @{debug} module.
+-- @field[parent = #global] debug#debug debug preloaded module
+
+-------------------------------------------------------------------------------
+-- Issues an error when the value of its argument `v` is false (i.e.,
+-- **nil** or **false**); otherwise, returns all its arguments. `message` is an error
+-- message; when absent, it defaults to *"assertion failed!"*.
+-- @function [parent=#global] assert
+-- @param v if this argument is false an error is issued.
+-- @param #string message an error message (optional, *"assertion failed"* by default)
+-- @return All its arguments.
+
+-------------------------------------------------------------------------------
+-- This function is a generic interface to the garbage collector. It performs
+-- different functions according to its first argument, `opt`:
+-- 
+-- * _"collect"_: performs a full garbage-collection cycle. This is the default option.
+-- * _"stop"_: stops automatic execution of the garbage collector. The collector will
+-- run only when explicitly invoked, until a call to restart it.
+-- * _"restart"_: restarts automatic execution of the garbage collector.
+-- * _"count"_: returns the total memory in use by Lua (in Kbytes) and a second 
+-- value with the total memory in bytes modulo `1024`. The first value has a fractional
+-- part, so the following equality is always true:
+-- (The second result is useful when Lua is compiled with a non floating-point type for numbers.)
+-- 
+--         k, b = collectgarbage("count")
+--         assert(k*1024 == math.floor(k)*1024 + b)
+-- 
+-- * _"step"_: performs a garbage-collection step. The step "size" is controlled by
+-- arg (larger values mean more steps) in a non-specified way. If you want to control
+-- the step size you must experimentally tune the value of arg. Returns **true** if
+-- the step finished a collection cycle.
+-- * _"setpause"_: sets `arg` as the new value for the pause of the collector.
+-- Returns the previous value for pause.
+-- * _"setstepmul"_: sets `arg` as the new value for the step multiplier of the collector.
+-- Returns the previous value for step.
+-- * _"isrunning"_: returns a boolean that tells whether the collector is running
+-- (i.e., not stopped).
+-- * _"generational"_: changes the collector to generational mode. This is an experimental feature.
+-- * _"incremental"_: changes the collector to incremental mode. This is the default mode.
+-- @function [parent=#global] collectgarbage
+-- @param #string opt the command to send (optional, "collect" by default)
+-- @param arg the argument of the command (optional).
+
+-------------------------------------------------------------------------------
+-- Opens the named file and executes its contents as a Lua chunk. When
+-- called without arguments,
+-- `dofile` executes the contents of the standard input (`stdin`). Returns
+-- all values returned by the chunk. In case of errors, `dofile` propagates
+-- the error to its caller (that is, `dofile` does not run in protected mode).
+-- @function [parent=#global] dofile
+-- @param #string filename the path to the file. (optional)
+-- @return values returned by the chunk
+
+-------------------------------------------------------------------------------
+-- Terminates the last protected function called and returns `message`
+-- as the error message. Function `error` never returns.
+--
+-- Usually, `error` adds some information about the error position at the
+-- beginning of the message. The `level` argument specifies how to get the
+-- error position.  
+-- With level 1 (the default), the error position is where the
+-- `error` function was called.  
+-- Level 2 points the error to where the function
+-- that called `error` was called; and so on.  
+-- Passing a level 0 avoids the addition of error position information to the message.
+-- @function [parent=#global] error
+-- @param #string message an error message.
+-- @param #number level specifies how to get the error position (optional, `1` by default).
+
+-------------------------------------------------------------------------------
+-- A global variable (not a function) that holds the global environment
+-- (that is, `_G._G = _G`). Lua itself does not use this variable; changing
+-- its value does not affect any environment, nor vice-versa.
+-- @field [parent = #global] #table _G
+
+-------------------------------------------------------------------------------
+-- If `object` does not have a metatable, returns **nil**. Otherwise, if the
+-- object's metatable has a `"__metatable"` field, returns the associated
+-- value. Otherwise, returns the metatable of the given object.
+-- @function [parent=#global] getmetatable
+-- @param object
+-- @return #table the metatable of object.
+-- @return #nil if no metatable was found
+
+-------------------------------------------------------------------------------
+-- If t has a metamethod __ipairs, calls it with t as argument and returns the
+-- first three results from the call.
+-- Otherwise, returns three values: an iterator function, the table `t`, and `0`,
+-- so that the construction
+-- 
+--      for i,v in ipairs(t) do body end
+-- 
+-- will iterate over the pairs `(1,t[1]), (2,t[2]), ...,` up to the first integer
+-- key absent from the table. 
+-- @function [parent=#global] ipairs
+-- @param #table t a table by index.
+-- @return iterator function, table `t`, the value `0`
+
+-------------------------------------------------------------------------------
+-- Loads a chunk.
+-- If `ld` is a string, the chunk is this string. If `ld` is a function, load calls
+-- it repeatedly to get the chunk pieces. Each call to `ld` must return a string
+-- that concatenates with previous results. A return of an empty string, **nil**, or
+-- no value signals the end of the chunk.
+-- 
+-- If there are no syntactic errors, returns the compiled chunk as a function;
+-- otherwise, returns **nil** plus the error message.
+-- 
+-- If the resulting function has upvalues, the first upvalue is set to the value
+-- of `env`, if that parameter is given, or to the value of the global environment.
+-- (When you load a main chunk, the resulting function will always have exactly one
+-- upvalue, the `_ENV` variable. When you load a binary chunk created from
+-- a function (see `string.dump`), the resulting function can have arbitrary upvalues.)
+-- 
+-- `source` is used as the source of the chunk for error messages and debug information.
+-- When absent, it defaults to `ld`, if `ld` is a string, or to `"=(load)"` otherwise.
+-- 
+-- The string mode controls whether the chunk can be text or binary
+-- (that is, a precompiled chunk). It may be the string `"b"` (only binary chunks),
+-- `"t"` (only text chunks), or `"bt"` (both binary and text). The default is `"bt"`. 
+-- @function [parent=#global] load
+-- @param ld string or function representing the chunk.
+-- @param #string source used as source code (optional, by default `ld` if `ld` is a
+-- string, or to `"=(load)"`otherwise.
+-- @param #string mode `"b"` for only binary chunk, `"t"` for only text chunks,
+-- `bt` for both binary and text (optional, "bt" by default).
+-- @param env environment where to set the first upvalue if any.
+-- @return compiled chunk as a function
+-- @return #nil, #string error message
+
+-------------------------------------------------------------------------------
+-- Similar to `load`, but gets the chunk from file `filename` or from the
+-- standard input, if no file name is given.
+-- @function [parent=#global] loadfile
+-- @param #string filename the path to the file. (optional)
+-- @param #string mode `"b"` for only binary chunk, `"t"` for only text chunks,
+-- `bt` for both binary and text (optional, "bt" by default).
+-- @param env environment where to set the first upvalue if any.
+-- @return compiled chunk as a function
+-- @return #nil, #string error message
+
+-------------------------------------------------------------------------------
+-- Allows a program to traverse all fields of a table. Its first argument is
+-- a table and its second argument is an index in this table. `next` returns
+-- the next index of the table and its associated value.
+--
+-- When called with **nil**
+-- as its second argument, `next` returns an initial index and its associated
+-- value. When called with the last index, or with nil in an empty table, `next`
+-- returns nil.
+--
+-- If the second argument is absent, then it is interpreted as
+-- nil. In particular, you can use `next(t)` to check whether a table is empty.
+-- The order in which the indices are enumerated is not specified, *even for
+-- numeric indices*. (To traverse a table in numeric order, use a numerical **for**.)
+--
+-- The behavior of `next` is undefined if, during the traversal, you assign
+-- any value to a non-existent field in the table. You may however modify
+-- existing fields. In particular, you may clear existing fields.
+-- @function [parent=#global] next
+-- @param #table table table to traverse.
+-- @param index initial index (optional).
+-- @return index, value
+-- @return #nil if called on the last index or on an empty table
+
+-------------------------------------------------------------------------------
+-- If t has a metamethod `__pairs`, calls it with t as argument and returns the
+-- first three results from the call.
+-- 
+-- Otherwise, returns three values: the `next` function, the table t, and nil,
+-- so that the construction
+-- 
+--      for k,v in pairs(t) do body end
+--  
+-- will iterate over all key–value pairs of table `t`.
+-- See function next for the caveats of modifying the table during its traversal. 
+-- @function [parent=#global] pairs
+-- @param #table t table to traverse.
+-- @return iterator function, table `t`, the value `0`
+
+-------------------------------------------------------------------------------
+-- Calls function `f` with the given arguments in *protected mode*. This
+-- means that any error inside `f` is not propagated; instead, `pcall` catches
+-- the error and returns a status code. Its first result is the status code (a
+-- boolean), which is true if the call succeeds without errors. In such case,
+-- `pcall` also returns all results from the call, after this first result. In
+-- case of any error, `pcall` returns **false** plus the error message.
+-- @function [parent=#global] pcall
+-- @param f function to be call in *protected mode*.
+-- @param ... function arguments.
+-- @return #boolean true plus the result of `f` function if its call succeeds without errors.
+-- @return #boolean,#string false plus the error message in case of any error.
+
+-------------------------------------------------------------------------------
+-- Receives any number of arguments and prints their values to `stdout`, using the
+-- `tostring` function to convert each argument to a string. print is not intended
+-- for formatted output, but only as a quick way to show a value, for instance for
+-- debugging. For complete control over the output, use `string.format` and `io.write`. 
+-- @function [parent=#global] print
+-- @param ... values to print to `stdout`.
+
+-------------------------------------------------------------------------------
+-- Checks whether `v1` is equal to `v2`, without invoking any
+-- metamethod. Returns a boolean.
+-- @function [parent=#global] rawequal
+-- @param v1 first operand
+-- @param v2 second operand
+-- @return #boolean true if `v1` is equal to `v2`. 
+
+-------------------------------------------------------------------------------
+-- Gets the real value of `table[index]`, without invoking any
+-- metamethod. `table` must be a table; `index` may be any value.
+-- @function [parent=#global] rawget
+-- @param #table table table to looking for
+-- @param index index in the table
+-- @return The real value of `table[index]`, without invoking any
+-- metamethod.
+
+-------------------------------------------------------------------------------
+-- Returns the length of the object `v`, which must be a table or a string, without
+-- invoking any metamethod. Returns an integer number. 
+-- @function [parent=#global] rawlen
+-- @param v table or a string
+-- @return #number length of `v`
+
+-------------------------------------------------------------------------------
+-- Sets the real value of `table[index]` to `value`, without invoking any
+-- metamethod. `table` must be a table, `index` any value different from nil,
+-- and `value` any Lua value.  
+-- This function returns `table`.
+-- @function [parent=#global] rawset
+-- @param #table table
+-- @param index any value different from nil.
+-- @param value any Lua value.
+-- @return #table the given table
+
+-------------------------------------------------------------------------------
+-- If `index` is a number, returns all arguments after argument number
+-- `index`. Otherwise, `index` must be the string `"#"`, and `select` returns
+-- the total number of extra arguments it received.
+-- @function [parent=#global] select
+-- @param index a number or the string `"#"`
+-- @param ...
+-- @return all arguments after argument number `index`
+-- @return total number of extra arguments
+
+-------------------------------------------------------------------------------
+-- Sets the metatable for the given table. (You cannot change the metatable
+-- of other types from Lua, only from C.) If `metatable` is nil, removes the
+-- metatable of the given table. If the original metatable has a `"__metatable"`
+-- field, raises an error.  
+-- This function returns `table`.
+-- @function [parent=#global] setmetatable
+-- @param #table table 
+-- @param #table metatable
+-- @return #table The first argument `table`.
+
+-------------------------------------------------------------------------------
+-- When called with no base, tonumber tries to convert its argument to a number.
+-- If the argument is already a number or a string convertible to a number,
+-- then tonumber returns this number; otherwise, it returns **nil**.
+--  
+-- When called with base, then e should be a string to be interpreted as an
+-- integer numeral in that base. The base may be any integer between `2` and `36`,
+-- inclusive. In bases above `10`, the letter 'A' (in either upper or lower case)
+-- represents `10`, 'B' represents `11`, and so forth, with 'Z' representing `35`.
+-- If the string `e` is not a valid numeral in the given base,
+-- the function returns **nil**. 
+-- @function [parent=#global] tonumber
+-- @param e a number or string to convert to a number.
+-- @param #number base the base to interpret the numeral, any integer between `2` and `36` (optional, `10` by default).
+-- @return #number converted number
+-- @return #nil if convertion fail.
+
+-------------------------------------------------------------------------------
+-- Receives an argument of any type and converts it to a string in a
+-- reasonable format. (For complete control of how numbers are converted, use
+-- `string.format`.)
+--
+-- If the metatable of `v` has a `"__tostring"` field, then `tostring` calls
+-- the corresponding value with `v` as argument, and uses the result of the
+-- call as its result.
+-- @function [parent=#global] tostring
+-- @param v an argument of any type.
+-- @return #string a string in a reasonable format.
+
+-------------------------------------------------------------------------------
+-- Returns the type of its only argument, coded as a string. The possible
+-- results of this function are "
+-- `nil`" (a string, not the value **nil**), "`number`", "`string`", "`boolean`",
+-- "`table`", "`function`", "`thread`", and "`userdata`".
+-- @function [parent=#global] type
+-- @param v any value.
+-- @return #string the type of `v`.
+
+-------------------------------------------------------------------------------
+-- A global variable (not a function) that holds a string containing the
+-- current interpreter version. The current contents of this variable is
+-- "`Lua 5.2`".
+-- @field [parent = #global] #string _VERSION
+
+-------------------------------------------------------------------------------
+-- This function is similar to pcall, except that it sets a new message handler msgh. 
+-- @param f function to be call in *protected mode*.
+-- @param msgh error message handler
+-- @param ... function arguments.
+-- @return #boolean true plus the result of `f` function if its call succeeds without errors.
+-- @return #boolean false if the call raise an error
+
+-------------------------------------------------------------------------------
+-- Loads the given module. The function starts by looking into the `package.loaded` table to 
+-- determine whether modname is already loaded. If it is, then require returns the value stored 
+-- at `package.loaded[modname]`. Otherwise, it tries to find a loader for the module.
+-- 
+-- To find a loader, require is guided by the `package.searchers` sequence. By changing this sequence,
+-- we can change how require looks for a module. The following explanation is based on the default
+-- configuration for `package.searchers`.
+-- 
+-- First require queries `package.preload[modname]`. If it has a value, this value (which should be a function)
+-- is the loader. Otherwise require searches for a Lua loader using the path stored in `package.path`.
+-- If that also fails, it searches for a C loader using the path stored in `package.cpath`. If that also
+-- fails, it tries an all-in-one loader (see `package.searchers`).
+-- 
+-- Once a loader is found, require calls the loader with two arguments: modname and an extra value dependent
+-- on how it got the loader. (If the loader came from a file, this extra value is the file name.) If the loader
+-- returns any non-nil value, require assigns the returned value to package.loaded[modname]. If the loader
+-- does not return a non-nil value and has not assigned any value to package.loaded[modname], then require
+-- assigns `true` to this entry. In any case, require returns the final value of package.loaded[modname].
+--
+-- If there is any error loading or running the module, or if it cannot find any loader for the module,
+-- then require raises an error. 
+-- @function [parent=#global] require
+-- @param #string modname name of module to load.
+-- @return loaded module
+
+-------------------------------------------------------------------------------
+--The Element class is the base class for the classes
+--Bus, Instance, Layer, Effect, MidiModule, ModulationMatrixRow, Slot and Zone.
+--The different types of elements are Instance, Slot, Program, Layer, Zone,
+--ModulationMatrixRow, MidiModule, Bus and Effect.
+--The properties of an Element object are described by the following fields:
+--@type Element
+--@field #string name Returns the name of the element.
+--@field #string id Returns the unique ID of the element.
+--@field #string type Returns the type of the element.
+--@field #list <#ParameterDefinition> parameterDefinitions
+--Returns an array with all ParameterDefinition objects of the element.
+--@field #Layer parent Returns the parent element in the Program Tree.
+--This evaluates to ` nil` if the element is the program.
+--@field #Program program Returns the program element in the Program Tree.
+--@field #number level Returns the level in the Program Tree hierarchy.
+--The program equals level 1. Each sublayer adds +1 to the level.
+
+-------------------------------------------------------------------------------
+--The Bus class inherits all properties and methods of the Element class.
+--The Element object of a bus can be obtained with ` findBusses` or ` getBus`.
+--It has the following fields:
+--@type Bus
+--@extends #Element
+--@field #boolean isAuxBus Returns ` true` if this is an aux bus
+--and ` false` if it is not.
+--@field #number auxNumber The number of the corresponding aux bus.
+--@field #number numChannels The number of output channels of the bus.
+--@field #boolean active Returns ` true` if the bus is active
+--and ` false` if it is not active.
+
+-------------------------------------------------------------------------------
+--The Instance class inherits all properties and methods of the Element class.
+--@type Instance
+--@extends #Element
+
+-------------------------------------------------------------------------------
+--The Layer class inherits all properties and methods of the Element class.
+--@type Layer
+--@extends #Element
+
+-------------------------------------------------------------------------------
+--The Program class inherits all properties and methods of the Layer class.
+--@type Program
+--@extends #Layer
+--@field #Instance instance The Element object of the plug-in instance.
+--@field #list <#Slot> assignedSlots
+--An array with the Element objects of the slots to which this program is assigned.
+
+-------------------------------------------------------------------------------
+--The Effect class inherits all properties and methods of the Element class.
+--@type Effect
+--@extends #Element
+--@field #string moduleType Returns the effect type.
+
+-------------------------------------------------------------------------------
+--The MidiModule class inherits all properties and methods of the Element class.
+--The Element object of a MIDI module can be obtained with
+--` findMidiModules` or ` getMidiModule`.
+--@type MidiModule
+--@extends #Element
+--@field #string moduleType Returns the MIDI module type.
+
+-------------------------------------------------------------------------------
+--The ModulationMatrixRow class inherits all properties and methods of the Element class.
+--The Element object of the modulation matrix row can be obtained with
+--` getModulationMatrixRow`.
+--It has the following fields:
+--@type ModulationMatrixRow
+--@extends #Element
+--@field #number rowNumber Returns the index of the modulation matrix row.
+--@field #Zone zone Returns the Zone object of the zone
+--that the modulation matrix row belongs to.
+
+-------------------------------------------------------------------------------
+--The Slot class inherits all properties and methods of the Element class.
+--@type Slot
+--@extends #Element
+
+-------------------------------------------------------------------------------
+--The Zone class inherits all properties and methods of the Element class.
+--The Element object of a zone can be obtained with ` findZones` or ` getZone`.
+--It has the following fields:
+--@type Zone
+--@extends #Element
+--@field #number keyLow The lowest key of the zone.
+--@field #number keyHigh The highest key of the zone.
+--@field #number velLow The lowest velocity of the zone.
+--@field #number velHigh The highest velocity of the zone.
+
+-------------------------------------------------------------------------------
+--The Lua Script MIDI module itself can be addressed with ` this`.
+--Further objects can be addressed with ` this.parent`,
+--` this.program` or with the get/find functions.
+--@field [parent=#global] #MidiModule this
+
+-------------------------------------------------------------------------------
+--The Event class describes the properties of events.
+--The state of an Event object is described by the following fields:
+--@type Event
+--@field #number type The type of event.
+--@field #number id The ID of the event.
+--@field #number note The note number in the range of 0 to 127.
+--@field #number velocity The note-on velocity in the range of 0 to 127.
+--@field #number controller The controller number.
+--@field #number value The value of a controller, pitch bend, or note expression event.
+--The value range depends on the event type.
+--@field #number bend The value of a pitch bend event in the range of -1.0 to 1.0.
+--@field #number noteExpressionType The type of note expression event.
+--@field #number ppqPosition The position of the event in ppq relative to the song start.
+--The host must be in in playback. This value will be 0.0 if the host is not in playback.
+
+-------------------------------------------------------------------------------
+--The properties of the LoadProgress class can be used to monitor the progress
+--when loading elements of VST presets.
+--The functions ` loadPresetAsync`, ` appendLayerAsync` and ` insertLayerAsync`
+--return a LoadProgress object.
+--The properties of the LoadProgress object are described by the following fields:
+--@type LoadProgress
+--@field #number progress The load progress in the range from 0 to 1.
+--@field #Layer root The value of ` .root` will be the Element object
+--of the first element (root) of the loaded VST preset.
+-- Depending on whether you load a layer, program, or multi-program VST preset,
+-- this is either an Element object of the type Layer, Program,or Instance.
+--@field #boolean cancel Set this to ` true` to cancel the loading of the preset.
+--@field #string error Message if an error occured.
+--@field info User definable field, for example, to manage several loading threads.
+
+-------------------------------------------------------------------------------
+--The ParameterDefinition class describes the properties of parameters.
+--@type ParameterDefinition
+--@field #string name Returns the name of the parameter.
+--@field #string longName Returns the long name of the parameter.
+--@field #number id Returns the ID of the parameter.
+--@field #string type Returns the data type of the parameter.
+--@field #number default Returns the default value of the parameter.
+--@field #number min Returns the minimum value of the parameter.
+--@field #number max Returns the maximum value of the parameter.
+--@field #boolean readOnly Returns ` true` if the value of the parameter is read-only
+--and ` false` if it is not.
+--@field #boolean writeAlways Returns ` true` if the value is always set
+--and ` false` if it is not.
+-- If this returns ` true`, the parameter sends a changed message
+-- even if the actual value did not change when it was set.
+--@field #boolean automatable Returns ` true` if the parameter can be automated
+--and ` false` if it cannot.
+--@field #boolean persistent Returns ` true` if the parameter restores from the VST preset
+--and ` false` if it does not.
+--@field #string unit Returns the unit of the parameter value, for example, dB.
+
+-------------------------------------------------------------------------------
+--@type ModulationSource
+--@field unassigned index: 0
+--@field lfo1 index: 1
+--@field lfo2 index: 2
+--@field ampEnv index: 3
+--@field filterEnv index: 4
+--@field pitchEnv index: 5
+--@field userEnv index: 6
+--@field stepMod index: 7
+--@field glide index: 8
+--@field keyFollow index: 9
+--@field noteOnVelocity index: 10
+--@field noteOnVelocitySquared index: 11
+--@field noteOnVelocityNormalized index: 12
+--@field noteOffVelocity index: 13
+--@field pitchBend index: 14
+--@field modWheel index: 15
+--@field aftertouch index: 16
+--@field midiControl index: 17
+--
+--* **sourceInfo1** : MIDI controller number (0 - 127)
+--@field quickControl index: 18
+--
+--* **sourceInfo1** : Element object of the layer
+--* **sourceInfo2** : Index of the quick control (1 - 11)
+--@field modulationModule index: 19
+--
+--* **sourceInfo1** : Element object of the MIDI module
+--* **sourceInfo2** : Number of the output channel
+--@field noteExpression index: 20
+--
+--* **sourceInfo1** : Number of the custom note expression (1-8)
+--@field noise index: 21
+--@field output index: 22
+--@field bus1 index: 23
+--@field bus2 index: 24
+--@field bus3 index: 25
+--@field bus4 index: 26
+--@field bus5 index: 27
+--@field bus6 index: 28
+--@field bus7 index: 29
+--@field bus8 index: 30
+--@field bus9 index: 31
+--@field bus10 index: 32
+--@field bus11 index: 33
+--@field bus12 index: 34
+--@field bus13 index: 35
+--@field bus14 index: 36
+--@field bus15 index: 37
+--@field bus16 index: 38
+--@field sampleAndHold index: 41
+--
+--* **sourceInfo1** : Index of the S&H (0 - 5)
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the different modulation sources:
+--
+--* 0 ModulationSource.unassigned
+--* 1 ModulationSource.lfo1
+--* 2 ModulationSource.lfo2
+--* 3 ModulationSource.ampEnv
+--* 4 ModulationSource.filterEnv
+--* 5 ModulationSource.pitchEnv
+--* 6 ModulationSource.userEnv
+--* 7 ModulationSource.stepMod
+--* 8 ModulationSource.glide
+--* 9 ModulationSource.keyFollow
+--* 10 ModulationSource.noteOnVelocity
+--* 11 ModulationSource.noteOnVelocitySquared
+--* 12 ModulationSource.noteOnVelocityNormalized
+--* 13 ModulationSource.noteOffVelocity
+--* 14 ModulationSource.pitchBend
+--* 15 ModulationSource.modWheel
+--* 16 ModulationSource.aftertouch
+--* 17 ModulationSource.midiControl
+--  * **sourceInfo1** : MIDI controller number (0 - 127)
+--* 18 ModulationSource.quickControl
+--  * **sourceInfo1** : Element object of the layer
+--  * **sourceInfo2** : Index of the quick control (1 - 11)
+--* 19 ModulationSource.modulationModule
+--  * **sourceInfo1** : Element object of the MIDI module
+--  * **sourceInfo2** : Number of the output channel
+--* 20 ModulationSource.noteExpression
+--  * **sourceInfo1** : Number of the custom note expression (1-8)
+--* 21 ModulationSource.noise
+--* 22 ModulationSource.output
+--* 23 ModulationSource.bus1
+--* 24 ModulationSource.bus2
+--* 25 ModulationSource.bus3
+--* 26 ModulationSource.bus4
+--* 27 ModulationSource.bus5
+--* 28 ModulationSource.bus6
+--* 29 ModulationSource.bus7
+--* 30 ModulationSource.bus8
+--* 31 ModulationSource.bus9
+--* 32 ModulationSource.bus10
+--* 33 ModulationSource.bus11
+--* 34 ModulationSource.bus12
+--* 35 ModulationSource.bus13
+--* 36 ModulationSource.bus14
+--* 37 ModulationSource.bus15
+--* 38 ModulationSource.bus16
+--* 39 -
+--* 40 -
+--* 41 ModulationSource.sampleAndHold
+--  * **sourceInfo1** : Index of the S&H (0 - 5)
+--**Source 2 only**
+--@field [parent=#global] #ModulationSource ModulationSource
+
+-------------------------------------------------------------------------------
+--@type ModulationDestination
+--@field unassigned index: 0
+--@field pitch index: 1
+--@field cutoff index: 2
+--@field resonance index: 3
+--@field distortion index: 4
+--@field morphX index: 5
+--@field morphY index: 6
+--@field cutoffOffset index: 7
+--@field resonanceOffset index: 8
+--@field level index: 9
+--@field volume1 index: 10
+--@field volume2 index: 11
+--@field pan index: 12
+--@field sampleStart index: 13
+--@field speedFactor index: 14
+--@field formantShift index: 15
+--@field grainPosition index: 16
+--@field grainDirection index: 17
+--@field grainDuration index: 18
+--@field grainLength index: 19
+--@field grainPitch index: 20
+--@field grainFormant index: 21
+--@field grainLevel index: 22
+--@field osc1Pitch index: 23
+--@field osc1Level index: 24
+--@field osc1Waveform index: 25
+--@field osc1MultiDetune index: 26
+--@field osc1MultiPan index: 27
+--@field osc1MultiVoices index: 28
+--@field osc2Pitch index: 29
+--@field osc2Level index: 30
+--@field osc2Waveform index: 31
+--@field osc2MultiDetune index: 32
+--@field osc2MultiPan index: 33
+--@field osc2MultiVoices index: 34
+--@field osc3Pitch index: 35
+--@field osc3Level index: 36
+--@field osc3Waveform index: 37
+--@field osc3MultiDetune index: 38
+--@field osc3MultiPan index: 39
+--@field osc3MultiVoices index: 40
+--@field subOscLevel index: 41
+--@field ringModLevel index: 42
+--@field noiseLevel index: 43
+--@field lfo1Freq index: 46
+--@field lfo1Shape index: 47
+--@field lfo2Freq index: 48
+--@field lfo2Shape index: 49
+--@field ampEnvAttack index: 50
+--@field ampEnvDecay index: 51
+--@field ampEnvSustain index: 52
+--@field ampEnvRelease index: 53
+--@field filterEnvAttack index: 54
+--@field filterEnvDecay index: 55
+--@field filterEnvSustain index: 56
+--@field filterEnvRelease index: 57
+--@field pitchEnvStartLev index: 58
+--@field pitchEnvAttack index: 59
+--@field pitchEnvAttLev index: 60
+--@field pitchEnvDecay index: 61
+--@field pitchEnvSustain index: 62
+--@field pitchEnvRelease index: 63
+--@field pitchEnvRelLev index: 64
+--@field userEnvStartLev index: 65
+--@field userEnvAttack index: 66
+--@field userEnvAttLev index: 67
+--@field userEnvDecay index: 68
+--@field userEnvSustain index: 69
+--@field userEnvRelease index: 70
+--@field userEnvRelLev index: 71
+--@field stepModFreq index: 72
+--@field stepModSlope index: 73
+--@field bus1 index: 74
+--@field bus2 index: 75
+--@field bus3 index: 76
+--@field bus4 index: 77
+--@field bus5 index: 78
+--@field bus6 index: 79
+--@field bus7 index: 80
+--@field bus8 index: 81
+--@field bus9 index: 82
+--@field bus10 index: 83
+--@field bus11 index: 84
+--@field bus12 index: 85
+--@field bus13 index: 86
+--@field bus14 index: 87
+--@field bus15 index: 88
+--@field bus16 index: 89
+--@field audioIn index: 92
+--@field wavetable1Pitch index: 93
+--@field wavetable1Level index: 94
+--@field wavetable1Pan index: 95
+--@field wavetable1MultiDetune index: 96
+--@field wavetable1MultiPan index: 97
+--@field wavetable1MultiSpread index: 98
+--@field wavetable1MultiVoices index: 99
+--@field wavetable1Pos index: 100
+--@field wavetable1Dir index: 102
+--@field wavetable1Speed index: 104
+--@field wavetable2Pitch index: 106
+--@field wavetable2Level index: 107
+--@field wavetable2Pan index: 108
+--@field wavetable2MultiDetune index: 109
+--@field wavetable2MultiPan index: 110
+--@field wavetable2MultiSpread index: 111
+--@field wavetable2MultiVoices index: 112
+--@field wavetable2Pos index: 113
+--@field wavetable2Dir index: 115
+--@field wavetable2Speed index: 117
+--@field wavetableSubPitch index: 119
+--@field wavetableSubLevel index: 120
+--@field wavetableSubPan index: 121
+--@field wavetableNoiseSpeed index: 122
+--@field wavetableNoiseLevel index: 123
+--@field wavetableNoisePan index: 124
+--@field wavetable1FormantShift index: 125
+--@field wavetable2FormantShift index: 126
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the modulation destinations:
+--
+--* 0 ModulationDestination.unassigned
+--* 1 ModulationDestination.pitch
+--* 2 ModulationDestination.cutoff
+--* 3 ModulationDestination.resonance
+--* 4 ModulationDestination.distortion
+--* 5 ModulationDestination.morphX
+--* 6 ModulationDestination.morphY
+--* 7 ModulationDestination.cutoffOffset
+--* 8 ModulationDestination.resonanceOffset
+--* 9 ModulationDestination.level
+--* 10 ModulationDestination.volume1
+--* 11 ModulationDestination.volume2
+--* 12 ModulationDestination.pan
+--* 13 ModulationDestination.sampleStart
+--* 14 ModulationDestination.speedFactor
+--* 15 ModulationDestination.formantShift
+--* 16 ModulationDestination.grainPosition
+--* 17 ModulationDestination.grainDirection
+--* 18 ModulationDestination.grainDuration
+--* 19 ModulationDestination.grainLength
+--* 20 ModulationDestination.grainPitch
+--* 21 ModulationDestination.grainFormant
+--* 22 ModulationDestination.grainLevel
+--* 23 ModulationDestination.osc1Pitch
+--* 24 ModulationDestination.osc1Level
+--* 25 ModulationDestination.osc1Waveform
+--* 26 ModulationDestination.osc1MultiDetune
+--* 27 ModulationDestination.osc1MultiPan
+--* 28 ModulationDestination.osc1MultiVoices
+--* 29 ModulationDestination.osc2Pitch
+--* 30 ModulationDestination.osc2Level
+--* 31 ModulationDestination.osc2Waveform
+--* 32 ModulationDestination.osc2MultiDetune
+--* 33 ModulationDestination.osc2MultiPan
+--* 34 ModulationDestination.osc2MultiVoices
+--* 35 ModulationDestination.osc3Pitch
+--* 36 ModulationDestination.osc3Level
+--* 37 ModulationDestination.osc3Waveform
+--* 38 ModulationDestination.osc3MultiDetune
+--* 39 ModulationDestination.osc3MultiPan
+--* 40 ModulationDestination.osc3MultiVoices
+--* 41 ModulationDestination.subOscLevel
+--* 42 ModulationDestination.ringModLevel
+--* 43 ModulationDestination.noiseLevel
+--* 44 -
+--* 45 -
+--* 46 ModulationDestination.lfo1Freq
+--* 47 ModulationDestination.lfo1Shape
+--* 48 ModulationDestination.lfo2Freq
+--* 49 ModulationDestination.lfo2Shape
+--* 50 ModulationDestination.ampEnvAttack
+--* 51 ModulationDestination.ampEnvDecay
+--* 52 ModulationDestination.ampEnvSustain
+--* 53 ModulationDestination.ampEnvRelease
+--* 54 ModulationDestination.filterEnvAttack
+--* 55 ModulationDestination.filterEnvDecay
+--* 56 ModulationDestination.filterEnvSustain
+--* 57 ModulationDestination.filterEnvRelease
+--* 58 ModulationDestination.pitchEnvStartLev
+--* 59 ModulationDestination.pitchEnvAttack
+--* 60 ModulationDestination.pitchEnvAttLev
+--* 61 ModulationDestination.pitchEnvDecay
+--* 62 ModulationDestination.pitchEnvSustain
+--* 63 ModulationDestination.pitchEnvRelease
+--* 64 ModulationDestination.pitchEnvRelLev
+--* 65 ModulationDestination.userEnvStartLev
+--* 66 ModulationDestination.userEnvAttack
+--* 67 ModulationDestination.userEnvAttLev
+--* 68 ModulationDestination.userEnvDecay
+--* 69 ModulationDestination.userEnvSustain
+--* 70 ModulationDestination.userEnvRelease
+--* 71 ModulationDestination.userEnvRelLev
+--* 72 ModulationDestination.stepModFreq
+--* 73 ModulationDestination.stepModSlope
+--* 74 ModulationDestination.bus1
+--* 75 ModulationDestination.bus2
+--* 76 ModulationDestination.bus3
+--* 77 ModulationDestination.bus4
+--* 78 ModulationDestination.bus5
+--* 79 ModulationDestination.bus6
+--* 80 ModulationDestination.bus7
+--* 81 ModulationDestination.bus8
+--* 82 ModulationDestination.bus9
+--* 83 ModulationDestination.bus10
+--* 84 ModulationDestination.bus11
+--* 85 ModulationDestination.bus12
+--* 86 ModulationDestination.bus13
+--* 87 ModulationDestination.bus14
+--* 88 ModulationDestination.bus15
+--* 89 ModulationDestination.bus16
+--* 90 -
+--* 91 -
+--* 92 ModulationDestination.audioIn
+--* 93 ModulationDestination.wavetable1Pitch
+--* 94 ModulationDestination.wavetable1Level
+--* 95 ModulationDestination.wavetable1Pan
+--* 96 ModulationDestination.wavetable1MultiDetune
+--* 97 ModulationDestination.wavetable1MultiPan
+--* 98 ModulationDestination.wavetable1MultiSpread
+--* 99 ModulationDestination.wavetable1MultiVoices
+--* 100 ModulationDestination.wavetable1Pos
+--* 101 -
+--* 102 ModulationDestination.wavetable1Dir
+--* 103 -
+--* 104 ModulationDestination.wavetable1Speed
+--* 105 -
+--* 106 ModulationDestination.wavetable2Pitch
+--* 107 ModulationDestination.wavetable2Level
+--* 108 ModulationDestination.wavetable2Pan
+--* 109 ModulationDestination.wavetable2MultiDetune
+--* 110 ModulationDestination.wavetable2MultiPan
+--* 111 ModulationDestination.wavetable2MultiSpread
+--* 112 ModulationDestination.wavetable2MultiVoices
+--* 113 ModulationDestination.wavetable2Pos
+--* 114 -
+--* 115 ModulationDestination.wavetable2Dir
+--* 116 -
+--* 117 ModulationDestination.wavetable2Speed
+--* 118 -
+--* 119 ModulationDestination.wavetableSubPitch
+--* 120 ModulationDestination.wavetableSubLevel
+--* 121 ModulationDestination.wavetableSubPan
+--* 122 ModulationDestination.wavetableNoiseSpeed
+--* 123 ModulationDestination.wavetableNoiseLevel
+--* 124 ModulationDestination.wavetableNoisePan
+--* 125 ModulationDestination.wavetable1FormantShift
+--* 126 ModulationDestination.wavetable2FormantShift
+--@field [parent=#global] #ModulationDestination ModulationDestination
+
+-------------------------------------------------------------------------------
+--@type QCAssignmentMode
+--@field absolute index: 1
+--@field relative index: 2
+--@field switch index: 3
+--@field switchRelative index: 4
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the different quick control assignment modes:
+--
+--* 1 QCAssignmentMode.absolute
+--* 2 QCAssignmentMode.relative
+--* 3 QCAssignmentMode.switch
+--* 4 QCAssignmentMode.switchRelative
+--@field [parent=#global] #QCAssignmentMode QCAssignmentMode
+
+-------------------------------------------------------------------------------
+--@type EventType
+--@field noteOn index: 1
+--@field noteOff index: 2
+--@field controller index: 3
+--@field noteExpression index: 4
+--@field programChange index: 5
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the different types of events:
+--
+--* 1 EventType.noteOn
+--* 2 EventType.noteOff
+--* 3 EventType.controller
+--* 4 EventType.noteExpression
+--* 5 EventType.programChange
+--@field [parent=#global] #EventType EventType
+
+-------------------------------------------------------------------------------
+--@type NoteExpressionType
+--@field volume index: 1
+--@field pan index: 2
+--@field tuning index: 3
+--@field custom1 index: 4
+--@field custom2 index: 5
+--@field custom3 index: 6
+--@field custom4 index: 7
+--@field custom5 index: 8
+--@field custom6 index: 9
+--@field custom7 index: 10
+--@field custom8 index: 11
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the different note expression types:
+--
+--* 1 NoteExpressionType.volume
+--* 2 NoteExpressionType.pan
+--* 3 NoteExpressionType.tuning
+--* 4 NoteExpressionType.custom1
+--* 5 NoteExpressionType.custom2
+--* 6 NoteExpressionType.custom3
+--* 7 NoteExpressionType.custom4
+--* 8 NoteExpressionType.custom5
+--* 9 NoteExpressionType.custom6
+--* 10 NoteExpressionType.custom7
+--* 11 NoteExpressionType.custom8
+--@field [parent=#global] #NoteExpressionType NoteExpressionType
+
+-------------------------------------------------------------------------------
+--@type UndoContext
+--@field inUndo index: 1
+--@field inRedo index: 2
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the undo context:
+--
+--* 1 UndoContext.inUndo
+--* 2 UndoContext.inRedo
+--@field [parent=#global] #UndoContext UndoContext
+
+-------------------------------------------------------------------------------
+--@type MidiSequenceTable
+--@field format The MIDI file format. It can be determined via names or indices.
+--@field #number smpteformat The SMPTE format.
+--@field #number division Specifies the ticks used for the SMPTE format.
+--The default is 480 ticks.
+--@field #number tempo The original tempo in beats per minute.
+--The default is 120 BPM.
+--@field #SignatureTable signature The time signature of the MIDI file as a table.
+--Numerator and denominator are separate fields of that table
+--@field #string songname The name of the song.
+--@field #list <#TracksTable> tracks The tracks of the MIDI file
+--as an array with the index starting at 1.
+--Name, channel and event are separate fields of that table.
+
+-------------------------------------------------------------------------------
+--@type SignatureTable
+--@field #number numerator The numerator of the time signature. The default is 4.
+--@field #number denominator The denominator of the time signature. The default is 4.
+
+-------------------------------------------------------------------------------
+--@type TracksTable
+--@field #string name The name of the track.
+--@field #number channel The MIDI channel of the track. The default is 1.
+--@field #list <#Event> events The events of the track as an array
+--with the index starting at 1.
+--The events are stored as Event objects.
+
+-------------------------------------------------------------------------------
+--@type MidiFileFormat
+--@field singleMultiChannelTrack index : 0
+--@field simultaneousTracks index : 1
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the different MIDI file formats:
+--
+--* 0 MidiFileFormat.singleMultiChannelTrack
+--* 1 MidiFileFormat.simultaneousTracks
+--@field [parent=#global] #MidiFileFormat MidiFileFormat
+
+-------------------------------------------------------------------------------
+--@type MessageBoxType
+--@field warning index : 1
+--@field question index : 2
+--@field information index : 3
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the types of the message box.
+--The type of the message box also defines which icon will be displayed:
+--
+--* 1 MessageBoxType.warning
+--* 2 MessageBoxType.question
+--* 3 MessageBoxType.information
+--@field [parent=#global] #MessageBoxType MessageBoxType
+
+-------------------------------------------------------------------------------
+--@type MessageBoxResult
+--@field escape index : 1
+--@field button1 index : 2
+--@field button2 index : 3
+--@field button3 index : 4
+
+-------------------------------------------------------------------------------
+--Enumerator to identify the results of the message box:
+--
+--* 1 MessageBoxResult.escape
+--* 2 MessageBoxResult.button1
+--* 3 MessageBoxResult.button2
+--* 4 MessageBoxResult.button3
+--@field [parent=#global] #MessageBoxResult MessageBoxResult
+
+-------------------------------------------------------------------------------
+--Function that gives access to protected layers.
+--By default, protected layers cannot be accessed by scripts.
+--The parameters of a protected layer and any elements inside of it are hidden for scripts.
+--This prevents someone unauthorized from parsing the Program Tree to retrieve hidden information.
+--By calling this function with the correct password,
+--the calling script can access the corresponding protected layers again.
+--@function [parent=#global] addLayerPassword
+--@param #string psw password of the protected layer
+
+-------------------------------------------------------------------------------
+--Function to add a quick control assignment to the specified layer and quick control.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control that you want to edit.
+--The quick control assignment will be added to the quick control
+--with the index stated by the qc argument.
+--The arguments element and nameOrID specify the parameter to be connected.
+--The scope determines the part of the program that
+--will be affected by the quick control assignment.
+--You specify the scope by setting the scope argument to the Element object
+--that corresponds to the desired part of the program.
+--@function [parent=#Layer] addQCAssignment
+--@param self
+--@param #number qc The index of the quick control to which the assignment will be added.
+--@param #Element element The Element object of the parameter to be connected.
+--@param nameOrID The name or ID of the parameter.
+--@param #Element scope The Element object that will be affected by the quick control assignment.
+
+-------------------------------------------------------------------------------
+--Function to generate channel aftertouch events.
+--@function [parent=#global] afterTouch
+--@param #number value The aftertouch value in the range of 0 to 127
+
+-------------------------------------------------------------------------------
+--Function to add a bus in the specified destination layer.
+--The destination layer is determined by its Layer object.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as destination layer.
+--The bus to be added is determined by its Bus object.
+--You can use ` getBus` or ` findBusses` to determine the bus.
+--The new bus will be added behind the existing busses.
+--To insert a bus at a specific position in the destination layer, use ` insertBus` instead.
+--@function [parent=#Layer] appendBus
+--@param self
+--@param #Bus bus The Bus object of the bus that you want to append.
+
+-------------------------------------------------------------------------------
+--Function to add an effect to the specified destination bus.
+--The destination bus is determined by its Bus object.
+--You can use ` getBus` or ` findBusses` to determine the destination bus.
+--The effect to be added is determined by its Effect object.
+--You can use ` getEffect` or ` findEffects` to determine the effect.
+--The new effect will be added behind the existing effects.
+--To insert an effect at a specific position in the bus, use ` insertEffect` instead.
+--@function [parent=#Bus] appendEffect
+--@param self
+--@param #Effect effect The Element object of the insert that you want to append.
+
+-------------------------------------------------------------------------------
+--Function to add a layer in the specified destination layer.
+--The layer to be added and the destination layer are both determined by their Layer objects.
+--You can use ` getLayer` or ` findLayers` to determine the layer to be added.
+--For example, ` this.parent` defines the parent layer of the script module
+--as destination layer.
+--The new layer will be added behind the existing layers.
+--To insert a layer at a specific position in the destination layer,
+--use ` insertLayer` or ` insertLayerAsync` instead.
+--@function [parent=#Layer] appendLayer
+--@param self
+--@param #Layer layer The Layer object of the layer that you want to append.
+
+-------------------------------------------------------------------------------
+--Function to add a layer in the specified destination layer
+--using a separate, parallel thread.
+--Appending a layer in a separate thread can be necessary
+--if the layer is too big to be added in a short time.
+--The layer to be inserted and the destination layer are both determined by their Layer objects.
+--You can use ` getLayer` or ` findLayers` to determine the layer to be inserted.
+--For example, ` this.parent` determines the parent layer of the script module
+--as destination layer.
+--The new layer will be added behind the existing layers.
+--To insert a layer at a specific position in the destination layer,
+--use ` insertLayer` or ` insertLayerAsync` instead.
+--The function returns a LoadProgress object that can be used to monitor the load progress.
+--After the layer is added, the callback function is called.
+--The callback function gets the LoadProgress object as default argument.
+--@function [parent=#Layer] appendLayerAsync
+--@param self
+--@param #Layer layer The Layer object of the layer that you want to append.
+--@param callback Callback function that is called when the layer is added.
+--The callback function gets the LoadProgress object as argument.
+--@return #LoadProgress Returns a LoadProgress object.
+--
+--Fields:
+--
+--* **.progress** : The load progress in the range from 0 to 1.
+--* **.root** : The value of ` .root` will be the Element object
+--  of the first element (root) of the loaded VST preset.
+--  Depending on whether you load a layer, program, or multi-program VST preset,
+--  this is either an Element object of the type Layer, Program,or Instance.
+--* **.cancel** : Set this to true to cancel the loading of the preset.
+--* **.error** : Message if an error occured.
+--* **.info** : User definable field, for example, to manage several loading threads.
+
+-------------------------------------------------------------------------------
+--Function to add a MIDI module in the specified destination layer.
+--The destination layer is determined by its Layer object.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as destination layer.
+--The MIDI module to be added is determined by its MidiModule object.
+--You can use ` getMidiModule` or ` findMidiModules` to determine the desired MIDI module.
+--The new MIDI module will be added behind the existing MIDI modules.
+--To insert a MIDI module at a specific position in the destination layer,
+--use ` insertMidiModule` instead.
+--@function [parent=#Layer] appendMidiModule
+--@param self
+--@param #MidiModule module The MidiModule object of the MIDI module that you want to append.
+
+-------------------------------------------------------------------------------
+--Function to add a zone in the specified destination layer.
+--The destination layer is determined by its Layer object.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as destination layer.
+--The zone to be added is determined by its Zone object.
+--You can use ` getZone` or ` findZones` to determine the zone.
+--The new zone will be added behind the existing zones.
+--To insert a zone at a specific position in the destination layer,
+--use ` insertZone` instead.
+--@function [parent=#Layer] appendZone
+--@param self
+--@param #Zone zone The Zone object of the zone that you want to append.
+
+-------------------------------------------------------------------------------
+--Function to assign a parameter to an automation parameter.
+--The arguments element and nameOrID specify the parameter to be assigned.
+--The index argument determines to which automation parameter the parameter will be assigned.
+--If the index argument is ` nil` or not set,
+--the parameter will be assigned to the next free automation parameter.
+--The scope determines the part of the program
+--that will be affected by the automation parameter.
+--You specify the scope by setting the scope argument to the Element object
+--that corresponds to the desired part of the program.
+--The function returns the index to which the automation parameter was assigned to.
+--This is useful if the automation parameter was assigned to the next free automation parameter.
+--@function [parent=#global] assignAutomation
+--@param element The Element object of the parameter to be assigned.
+--@param nameOrID The name or ID of the parameter.
+--@param index The index of the automation parameter, or nil. Optional
+--@param #Element scope The Element object that will be affected by the automation parameter.
+--@return Returns the index to which the automation parameter was assigned to.
+
+-------------------------------------------------------------------------------
+--Audio File Class
+--The AudioFile.open function creates an AudioFile object of the specified audio file.
+--The AudioFile object can be used to retrieve information from the audio file,
+--for example, the sample rate, bit depth, length in samples, etc.
+--The AudioFile object has the following fields:
+--@type AudioFile
+--@field #boolean valid Indicates if the file is a supported audio file
+--and whether it could be opened or not.
+--@field #string fileName The file name that was used for opening the audio file.
+--@field #number rate The sample rate of the audio file.
+--Returns ` nil` if the audio file could not be opened or is invalid.
+--@field #number bits The bit depth of the audio file.
+--Returns ` nil` if the audio file could not be opened or is invalid.
+--@field #number channels The number of channels of the audio file.
+--Returns ` nil` if the audio file could not be opened or is invalid.
+--@field #number length The number of samples in the audio file.
+--Returns ` nil` if the audio file could not be opened or is invalid.
+--@field #number rootKey The root key stored in the sampler chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--or could not be opened or is invalid.
+--@field #number keyLow The lowest key of the key range
+--stored in the sampler chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--or could not be opened or is invalid.
+--@field #number keyHigh The highest key of the key range
+--stored in the sampler chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--or could not be opened or is invalid.
+--@field #number velLow The lowest velocity of the velocity range
+--stored in the sampler chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--or could not be opened or is invalid.
+--@field #number velHigh The highest velocity of the velocity range
+--stored in the sampler chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--or could not be opened or is invalid.
+--@field #number detune The tune offset in cents
+--stored in the sampler chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--or could not be opened or is invalid.
+--@field #number level The level offset in dB
+--stored in the sampler chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--or could not be opened or is invalid.
+--@field #number tempo The tempo in bpm stored in a data chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate data chunk
+--or could not be opened or is invalid.
+--@field #number beats The number of beats stored in a data chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate data chunk
+--or could not be opened or is invalid.
+--@field signature A pair of values for the numerator and denominator of the signature
+--stored in a data chunk of the audio file.
+--The values are ` nil` if the audio file does not contain an appropriate data chunk
+--or could not be opened or is invalid.
+--@field #number sampleStart The position of the sample start in samples
+--stored in a data chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate data chunk
+--or could not be opened or is invalid.
+--@field #number sampleEnd The position of the sample end in samples
+--stored in a data chunk of the audio file.
+--Returns ` nil` if the audio file does not contain an appropriate data chunk
+--or could not be opened or is invalid.
+--@field #table loops The loop start and end positions in samples
+--stored in a data chunk of the audio file.
+--The returned table is an array that contains tables with the fields
+--` .loopStart` and ` .loopEnd` for each loop.
+--Returns ` nil` if the audio file does not contain an appropriate data chunk
+--or could not be opened or is invalid.
+
+-------------------------------------------------------------------------------
+--@field [parent=#global] #AudioFile AudioFile
+
+-------------------------------------------------------------------------------
+--The ` AudioFile.open` function creates an AudioFile object of the specified audio file.
+--The AudioFile object can be used to retrieve information from the audio file,
+--for example, the sample rate, bit depth, length in samples, etc.
+--The location of the audio file can be a folder or a VST Sound archive.
+--
+--The AudioFile object has the following fields:
+--
+--* **.valid** : Indicates if the file is a supported audio file
+--  and whether it could be opened or not.
+--* **.fileName** : The file name that was used for opening the audio file.
+--* **.rate** : The sample rate of the audio file.
+--  Returns ` nil` if the audio file could not be opened or is invalid.
+--* **.bits** : The bit depth of the audio file.
+--  Returns ` nil` if the audio file could not be opened or is invalid.
+--* **.channels** : The number of channels of the audio file.
+--  Returns ` nil` if the audio file could not be opened or is invalid.
+--* **.length** : The number of samples in the audio file.
+--  Returns ` nil` if the audio file could not be opened or is invalid.
+--* **.rootKey** : The root key stored in the sampler chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--  or could not be opened or is invalid.
+--* **.keyLow** : The lowest key of the key range
+--  stored in the sampler chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--  or could not be opened or is invalid.
+--* **.keyHigh** : The highest key of the key range
+--  stored in the sampler chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--  or could not be opened or is invalid.
+--* **.velLow** : The lowest velocity of the velocity range
+--  stored in the sampler chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--  or could not be opened or is invalid.
+--* **.velHigh** : The highest velocity of the velocity range
+--  stored in the sampler chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--  or could not be opened or is invalid.
+--* **.detune** : The tune offset in cents stored in the sampler chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--  or could not be opened or is invalid.
+--* **.level** : The level offset in dB stored in the sampler chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate sampler chunk
+--  or could not be opened or is invalid.
+--* **.tempo** : The tempo in bpm stored in a data chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate data chunk
+--  or could not be opened or is invalid.
+--* **.beats** : The number of beats stored in a data chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate data chunk
+--  or could not be opened or is invalid.
+--* **.signature** : A pair of values for the numerator and denominator of the signature
+--  stored in a data chunk of the audio file.
+--  The values are ` nil` if the audio file does not contain an appropriate data chunk
+--  or could not be opened or is invalid.
+--* **.sampleStart** : The position of the sample start in samples
+--  stored in a data chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate data chunk
+--  or could not be opened or is invalid.
+--* **.sampleEnd** : The position of the sample end in samples
+--  stored in a data chunk of the audio file.
+--  Returns ` nil` if the audio file does not contain an appropriate data chunk
+--  or could not be opened or is invalid.
+--* **.loops** : The loop start and end positions in samples
+--  stored in a data chunk of the audio file.
+--  The returned table is an array that contains tables with the fields
+--  ` .loopStart` and ` .loopEnd` for each loop.
+--  Returns ` nil` if the audio file does not contain an appropriate data chunk
+--  or could not be opened or is invalid.
+--
+--@function [parent=#AudioFile] open
+--@param filename The file path and name of the audio file.
+--@return #AudioFile Returns an AudioFile object of the specified audio file.
+
+-------------------------------------------------------------------------------
+--Function to convert a number of beats to the equivalent duration in milliseconds.
+--One beat equals a quarter note. The current tempo is taken into account.
+--@function [parent=#global] beat2ms
+--@param #number beats The desired duration in number of beats and fractions of it.
+--@return Returns the specified number of beats (quarter notes) as duration in milliseconds.
+
+-------------------------------------------------------------------------------
+--Function to generate the modulation signals that have been defined with defineModulation.
+--The function is executed every 32 samples.
+--@function [parent=#global] calcModulation
+--@return Returns one or more modulation signals.
+--Multiple modulation signals can be returned as a tuple or as a table.
+--If the modulation is defined as unipolar, the signal must be in the range from 0.0 to 1.0.
+--If the modulation is defined as bipolar, the signal must be in the range from -1.0 to 1.0.
+
+-------------------------------------------------------------------------------
+--Function to change the note expression of a specific note.
+--@function [parent=#global] changeNoteExpression
+--@param #number noteID The ID of the note you want to change.
+--@param type The note expression type. It can be determined via names or indices.
+--@param #number value The absolute note expression value in the range of 0.0 to 1.0 (relative = ` false`)
+--or the value that is added (relative = ` true`).
+--@param #boolean relative The value is added to the current amount if this is set to ` true`.
+--The default setting is ` false`. Optional.
+--@param immediateOrDuration Change the value immediately or in the specified duration.
+--Set this to ` true` to change the value immediately without controller smoothing.
+--Set a duration in milliseconds to change the value with controller smoothing in the specified time.
+--If not set, this setting defaults to ` false`
+--and the controller smoothing setting in the Options editor is used. Optional.
+--
+--Enumerator to identify the different note expression types:
+--
+--* 1 NoteExpressionType.volume
+--* 2 NoteExpressionType.pan
+--* 3 NoteExpressionType.tuning
+--* 4 NoteExpressionType.custom1
+--* 5 NoteExpressionType.custom2
+--* 6 NoteExpressionType.custom3
+--* 7 NoteExpressionType.custom4
+--* 8 NoteExpressionType.custom5
+--* 9 NoteExpressionType.custom6
+--* 10 NoteExpressionType.custom7
+--* 11 NoteExpressionType.custom8
+
+-------------------------------------------------------------------------------
+--Function to change the position of a specific note in the panorama.
+--@function [parent=#global] changePan
+--@param #number noteID The ID of the note that you want to change.
+--@param #number pan The absolute pan position in the range of -1.0 to 1.0 (relative = ` false`)
+--or the value which is added (relative = ` true`).
+--@param #boolean relative The value is added to the current amount if this is set to ` true`.
+--The default is ` false`. Optional.
+--@param immediateOrDuration Change the value immediately or in the specified duration.
+--Set this to ` true` to change the value immediately without controller smoothing.
+--Set a duration in milliseconds to change the value with controller smoothing in the specified time.
+--If not set, this setting defaults to ` false`
+--and the controller smoothing setting in the Options editor is used. Optional.
+
+-------------------------------------------------------------------------------
+--Function to change the tuning of a specific note in semitones.
+--@function [parent=#global] changeTune
+--@param #number noteID The ID of the note that you want to change.
+--@param #number tune The absolute tuning in the range of -120.0 to 120.0 semitones (relative = false)
+--or the value which is added (relative = ` true`).
+--@param #boolean relative The value is added to the current amount if this is set to ` true`.
+--The default is ` false`. Optional.
+--@param immediateOrDuration Change the value immediately or in the specified duration.
+--Set this to ` true` to change the value immediately without controller smoothing.
+--Set a duration in milliseconds to change the value with controller smoothing in the specified time.
+--If not set, this setting defaults to ` false`
+--and the controller smoothing setting in the Options editor is used. Optional.
+
+-------------------------------------------------------------------------------
+--Function to change the volume of a specific note.
+--A gain factor greater than 1.0 amplifies the signal
+--and a gain factor smaller than 1.0 attenuates the signal.
+--@function [parent=#global] changeVolume
+--@param #number noteID The ID of the note that you want to change.
+--@param #number gain The absolute gain (relative = ` false`)
+--or the value which is added (relative = ` true`).
+--@param #boolean relative The value is added to the current amount if this is set to ` true`.
+--The default is ` false`. Optional.
+--@param immediateOrDuration Change the value immediately or in the specified duration.
+--Set this to ` true` to change the value immediately without controller smoothing.
+--Set a duration in milliseconds to change the value with controller smoothing in the specified time.
+--If not set, this setting defaults to ` false`
+--and the controller smoothing setting in the Options editor is used. Optional.
+
+-------------------------------------------------------------------------------
+--Function to change the volume of a specific note in decibels (dB).
+--Positive values amplify the signal and negative values attenuate the signal.
+--@function [parent=#global] changeVolumedB
+--@param #number noteID The ID of the note that you want to change.
+--@param #number gain_dB The absolute gain in dB (relative = false)
+--or the value which is added (relative = ` true`).
+--@param #boolean relative The value is added to the current amount if  this is set to ` true`.
+--The default is ` false`. Optional.
+--@param immediateOrDuration Change the value immediately or in the specified duration.
+--Set this to ` true` to change the value immediately without controller smoothing.
+--Set a duration in milliseconds to change the value with controller smoothing in the specified time.
+--If not set, this setting defaults to ` false`
+--and the controller smoothing setting in the Options editor is used. Optional.
+
+-------------------------------------------------------------------------------
+--Function to create a copy of the specified event.
+--For example, if you want to transpose the events of a MIDI sequence,
+--and you do not want to modify the original data, you can clone the events before transposing them.
+--@function [parent=#global] clone
+--@param #Event event The Event object to be cloned.
+--@return Returns a copy of the specified event.
+
+-------------------------------------------------------------------------------
+--Function to generate controller events.
+--@function [parent=#global] controlChange
+--@param #number controller The controller number.
+--@param #number value The controller value in the range of 0 to 127.
+
+-------------------------------------------------------------------------------
+--Function to declare a modulation output for the script module,
+--which can be assigned in the modulation matrix of the zone.
+--The declared modulation outputs can be found on the Modulation Module submenu
+--of the modulation matrix's Source menu.
+--This function can be used multiple times to declare different modulation outputs.
+--@function [parent=#global] defineModulation
+--@param #string name The name of the modulation output
+--as it will be shown in the modulation matrix of the zone.
+--@param #boolean bipolar If this is set to ` true`,
+--the output is expected to be in the range from -1.0 to 1.0.
+--If this is set to ` false`, the output is expected to be in the range from 0.0 to 1.0.
+
+-------------------------------------------------------------------------------
+--Function to specify a parameter with the specified name and characteristics.
+--The parameters you define can be used to configure the script module
+--and save its state with the program.
+--They are shown in the Parameter List
+--from where you can connect them to controls on the macro page.
+--
+--**Numeric**
+--
+--` defineParameter(name, longName, default, min, max, increment, changeCallback)`
+--
+--Creates a numeric parameter.
+--The default argument defines the value that the parameter will default to.
+--The min and max arguments define the value range of the parameter.
+--The increment argument defines the step size of the parameter.
+--The arguments default, min, max  and increment can be any integer or floating point value.
+--How many digits are shown behind the decimal point for a value string of a parameter
+--is determined by the value of the increment argument.
+--
+--**Indexed String Array**
+--
+--` defineParameter(name, longName, default, strings, changeCallback)`
+--
+--Creates a parameter with integer indices
+--that have a text representation given by the string values of an array.
+--The default argument defines the index that the parameter will default to.
+--The strings argument must be an array with string values starting with index 0 or 1.
+--
+--**Boolean**
+--
+--` defineParameter(name, longName, bool, changeCallback)`
+--
+--Creates a boolean parameter.
+--The bool argument also defines the default value of the parameter.
+--
+--**String**
+--
+--` defineParameter(name, longName, string, changeCallback)`
+--
+--Creates a parameter with a string value.
+--You can change the string by assigning a new string value to the parameter.
+--
+--**Table**
+--
+--` defineParameter(name, longName, table, changeCallback)`
+--
+--Creates a parameter with a table as value.
+--The name argument of the parameter also defines the name of the table.
+--You can access the values of the table using the regular methods, e.g., dot notation.
+--
+--**By Parameter Definition**
+--
+--` defineParameter(name, longName, parameterDefinition, changeCallback)`
+--
+--Creates a parameter with the behavior of the specified parameterDefinition.
+--You can use this to clone the behavior of existing parameters.
+--
+--**By Named Arguments**
+--
+--` defineParameter { name = "p", longName = "param", default = 0, min = 0, max = 100, increment = 0.01, onChanged = callback, type = "float", format = "%.2f", readOnly = false, writeAlways = false, automatable = true, persistent = true }`
+--
+--Creates a parameter by named arguments.
+--The only argument to the function is a table with the key/value pairs that define the parameter.
+--The additional keys type, format, readOnly, writeAlways, automatable and persistent
+--give you control over more advanced features.
+--They can only be set with named arguments.
+--
+--Arguments:
+--
+--* **name** : The name of the parameter.
+--* **longName** : The long name of the parameter, e.g., the name of the tool tip.
+--  If the argument is ` nil` or not set, the name will be used.
+--* **default** : The default value of the parameter.
+--  The argument defaults to 0 if not set.
+--* **min** : The minimum value of the parameter.
+--  The argument defaults to 0 if not set.
+--* **max** : The maximum value of the parameter.
+--  The argument defaults to 100 if not set.
+--* **increment** : The step size of the parameter as floating point value.
+--  Set this to 1 for integer steps.
+--  The argument defaults to 0 (floating point value, no steps) if not set.
+--* **strings** : Creates a parameter with an indexed string array.
+--  The index starts with 0 or 1, depending on how you initialize the table.
+--  The string values of the array define the text representation of the parameter in the Parameter List.
+--* **bool** : Creates a boolean parameter.
+--  This argument also defines the default value of the parameter.
+--* **string** : Creates a parameter with a string value.
+--  You can change the string by assigning a new string value to the parameter.
+--* **table** : Creates a parameter with a table as value.
+--* **parameterDefinition** : Creates a parameter with the behavior of the set parameterDefinition.
+--  You can use this to clone the behavior of existing parameters.
+--* **onChanged** : Callback function that is called if the value of the parameter has changed.
+--* **type**: The value type of the parameter
+--  (integer, float, boolean, string, variant, or envelope).
+--  The type must match the default and increment arguments.
+--* **format** : Formats the value string of a float value using the provided arguments.
+--  Only the format specifiers for float values are supported, i.e., e, E, f, g, or G.
+--  Other format specifiers are not supported.
+--  This overrides any automatic formatting from the increment argument.
+--* **readOnly** : The parameter can only be changed from the script
+--  if this is set to ` true`.
+--  The argument defaults to ` false` if not set.
+--* **writeAlways** : A parameter does not call its change callback
+--  if its value is set without being changed.
+--  Set this to ` true` if you want to guarantee
+--  that the change callback of the parameter is called.
+--  The argument defaults to ` false` if not set.
+--* **automatable** : Set this to ` false`
+--  if you do not want the parameter to be automated.
+--  The argument defaults to ` true` if not set.
+--* **persistent** : The parameter will not be restored from the VST preset
+--  if this is set to ` false`.
+--  The argument defaults to ` true` if not set.
+--@function [parent=#global] defineParameter
+--@param #string name Name of the parameter
+
+-------------------------------------------------------------------------------
+--Function to attain global variables that operate independently per slot.
+--You can call defineSlotLocal before or after the initialization of the corresponding variable,
+--but it is common practice to call the function in advance.
+--@function [parent=#global] defineSlotLocal
+--@param #string name The name of the global variable.
+
+-------------------------------------------------------------------------------
+--Function to terminate an undo block.
+--An undo block begins with startUndoBlock.
+--Any changes between the beginning and the termination of the undo block
+--will be summarized into one undo entry in the undo history.
+--@function [parent=#global] endUndoBlock
+
+-------------------------------------------------------------------------------
+--Constructor to create a new Event object of the specified type.
+--The event type can be determined with these names or indices:
+--
+--* 1  EventType.noteOn
+--* 2  EventType.noteOff
+--* 3  EventType.controller
+--* 4  EventType.noteExpression
+--* 5  EventType.programChange
+--@function [parent=#global] Event
+--@param #Event type The type of event.
+--@return #Event Returns a new Event object of the specified type.
+
+-------------------------------------------------------------------------------
+--Function to fade the volume of a specific note.
+--The fade is performed from the start to the target value
+--with the specified duration in milliseconds
+--and affects all voices that are triggered by the note.
+--You can start a fade from the current value of a running fade
+--by setting the start value to ` nil`.
+--You can kill the triggered voices
+--if the target value is reached by setting killVoice to true.
+--The fade is applied in addition to any changes from
+--` changeVolume`, ` changeVolumedB` and ` changeNoteExpression`.
+--@function [parent=#global] fade
+--@param #number noteID The ID of the note you want to fade.
+--@param startValue The start value of the fade in the range of 0 to 1.0.
+--Set this to ` nil` to start the fade from the current value of a running fade.
+--@param #number targetValue The target value of the fade in the range of 0 to 1.0.
+--@param #number duration The length of the fade in milliseconds.
+--The target value is set instantaneously if this is set to <= 0.
+--@param #boolean killVoice Set this to ` true`
+--to kill the note when the target value reached.
+--The default is ` false`.
+
+-------------------------------------------------------------------------------
+--Function to find busses in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as the Element object to be searched in.
+--If recursive is set to ` true`, subelements will also be searched.
+--The function returns an array with the Bus objects of the found busses.
+--Particular busses can be searched by name or through a filter function.
+--If searching by name, ` findBusses` accepts only the Bus objects
+--that match the specified name.
+--The filter function uses the Bus object of each bus as argument.
+--Only those Bus objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findBusses`.
+--Without a name or filter function
+--the Bus objects of all busses in the searched Element obects  will be returned.
+--@function [parent=#Layer] findBusses
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the specified Element object will be searched.
+--If set to ` true`, subelements will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the busses searched for or a filter function.
+--Only the Bus objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Bus> Returns an array with the Bus objects of the found busses.
+
+-------------------------------------------------------------------------------
+--Function to find busses in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as the Element object to be searched in.
+--If recursive is set to ` true`, subelements will also be searched.
+--The function returns an array with the Bus objects of the found busses.
+--Particular busses can be searched by name or through a filter function.
+--If searching by name, ` findBusses` accepts only the Bus objects
+--that match the specified name.
+--The filter function uses the Bus object of each bus as argument.
+--Only those Bus objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findBusses`.
+--Without a name or filter function
+--the Bus objects of all busses in the searched Element obects  will be returned.
+--@function [parent=#Instance] findBusses
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the specified Element object will be searched.
+--If set to ` true`, subelements will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the busses searched for or a filter function.
+--Only the Bus objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Bus> Returns an array with the Bus objects of the found busses.
+
+-------------------------------------------------------------------------------
+--Function to find busses in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as the Element object to be searched in.
+--If recursive is set to ` true`, subelements will also be searched.
+--The function returns an array with the Bus objects of the found busses.
+--Particular busses can be searched by name or through a filter function.
+--If searching by name, ` findBusses` accepts only the Bus objects
+--that match the specified name.
+--The filter function uses the Bus object of each bus as argument.
+--Only those Bus objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findBusses`.
+--Without a name or filter function
+--the Bus objects of all busses in the searched Element obects  will be returned.
+--@function [parent=#Slot] findBusses
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the specified Element object will be searched.
+--If set to ` true`, subelements will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the busses searched for or a filter function.
+--Only the Bus objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Bus> Returns an array with the Bus objects of the found busses.
+
+-------------------------------------------------------------------------------
+--Function to find children in the specified Element object.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the Element object to be searched in.
+--If recursive is set to ` true`, subelements will also be searched.
+--The function returns an array with the Element objects of the found children.
+--Particular children can be searched by name or through a filter function.
+--If searching by name, ` findChildren` accepts only the Element objects
+--that match the specified name.
+--The filter function uses the Element object of each child as argument.
+--Only those Element objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findChildren`.
+--Without a name or filter function
+--the Element objects of all children in the searched Element object will be returned.
+--@function [parent=#Element] findChildren
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the specified Element object will be searched.
+--If set to ` true`, subelements will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the children searched for or a filter function.
+--Only the Element objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Element> Returns an array with the Element objects of the found children.
+--Returns an empty table if no children are found.
+
+-------------------------------------------------------------------------------
+--Function to find effects in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as Element object to be searched in.
+--To specifiy a bus to be searched in, use ` getBus` or ` findBusses`.
+--If recursive is set to ` true`, subelements will also be searched.
+--The function returns an array with the Effect objects of the found effects.
+--Particular effects can be searched by name or through a filter function.
+--If searching by name, ` findEffects` accepts only the Effect objects
+--that match the specified name.
+--The filter function uses the Effect object of each effect as argument.
+--Only those Effect objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findEffects`.
+--Without a name or filter function
+--the Effect objects of all effects in the searched Element objects will be returned.
+--@function [parent=#Layer] findEffects
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the specified Element object will be searched.
+--If set to ` true`, subelements will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the effects searched for or a filter function.
+--Only the Effect objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Effect> Returns an array with the Effect objects of the found effects.
+--Returns an empty table if no effects are found.
+
+-------------------------------------------------------------------------------
+--Function to find effects in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as Element object to be searched in.
+--To specifiy a bus to be searched in, use ` getBus` or ` findBusses`.
+--If recursive is set to ` true`, subelements will also be searched.
+--The function returns an array with the Effect objects of the found effects.
+--Particular effects can be searched by name or through a filter function.
+--If searching by name, ` findEffects` accepts only the Effect objects
+--that match the specified name.
+--The filter function uses the Effect object of each effect as argument.
+--Only those Effect objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findEffects`.
+--Without a name or filter function
+--the Effect objects of all effects in the searched Element objects will be returned.
+--@function [parent=#Bus] findEffects
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the specified Element object will be searched.
+--If set to ` true`, subelements will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the effects searched for or a filter function.
+--Only the Effect objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Effect> Returns an array with the Effect objects of the found effects.
+--Returns an empty table if no effects are found.
+
+-------------------------------------------------------------------------------
+--Function to find effects in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as Element object to be searched in.
+--To specifiy a bus to be searched in, use ` getBus` or ` findBusses`.
+--If recursive is set to ` true`, subelements will also be searched.
+--The function returns an array with the Effect objects of the found effects.
+--Particular effects can be searched by name or through a filter function.
+--If searching by name, ` findEffects` accepts only the Effect objects
+--that match the specified name.
+--The filter function uses the Effect object of each effect as argument.
+--Only those Effect objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findEffects`.
+--Without a name or filter function the Effect objects of all effects
+--in the searched Element objects will be returned.
+--@function [parent=#Instance] findEffects
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the specified Element object will be searched.
+--If set to ` true`, subelements will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the effects searched for or a filter function.
+--Only the Effect objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Effect> Returns an array with the Effect objects of the found effects.
+--Returns an empty table if no effects are found.
+
+-------------------------------------------------------------------------------
+--Function to find effects in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as Element object to be searched in.
+--To specifiy a bus to be searched in, use ` getBus` or ` findBusses`.
+--If recursive is set to ` true`, subelements will also be searched.
+--The function returns an array with the Effect objects of the found effects.
+--Particular effects can be searched by name or through a filter function.
+--If searching by name, ` findEffects` accepts only the Effect objects
+--that match the specified name.
+--The filter function uses the Effect object of each effect as argument.
+--Only those Effect objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findEffects`.
+--Without a name or filter function the Effect objects of all effects
+--in the searched Element objects will be returned.
+--@function [parent=#Slot] findEffects
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the specified Element object will be searched.
+--If set to ` true`, subelements will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the effects searched for or a filter function.
+--Only the Effect objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Effect> Returns an array with the Effect objects of the found effects.
+--Returns an empty table if no effects are found.
+
+-------------------------------------------------------------------------------
+--Function to find layers in the specified layer.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the layer to be searched in.
+--If recursive is set to ` true`, sublayers will also be searched.
+--The function returns an array with the Layer objects of the found layers.
+--Particular layers can be searched by name or through a filter function.
+--If searching by name, ` findLayers` accepts only the Layer objects
+--that match the specified name.
+--The filter function uses the Layer object of each layer as argument.
+--Only those Layer objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findLayers`.
+--Without a name or filter function the Layer objects of all layers
+--in the searched layers will be returned.
+--@function [parent=#Layer] findLayers
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the current layer will be searched.
+--If set to ` true`, sublayers will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the layers searched for or a filter function.
+--Only the Layer objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Layer> Returns an array with the Layer objects of the found layers.
+--Returns an empty table if no layers are found.
+
+-------------------------------------------------------------------------------
+--Function to find MIDI modules in the specified layer.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the layer to be searched in.
+--If recursive is set to ` true`, sublayers will also be searched.
+--The function returns an array with the MidiModule objects of the found MIDI modules.
+--Particular MIDI modules can be searched by name or through a filter function.
+--If searching by name, findMidiModules accepts only the MidiModule objects
+--that match the specified name.
+--The filter function uses the MidiModule object of each MIDI module as argument.
+--Only those MidiModule objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by findMidiModules.
+--Without a name or filter function the MidiModule objects of all MIDI modules
+--in the searched layers will be returned.
+--@function [parent=#Layer] findMidiModules
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the current layer will be searched.
+--If set to ` true`, sublayers will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the MIDI modules searched for or a filter function.
+--Only the MidiModule objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#MidiModule> Returns an array
+--with the MidiModule objects of the found MIDI modules.
+--Returns an empty table if no MIDI modules are found.
+
+-------------------------------------------------------------------------------
+--Function to find the slots of the plug-in instance.
+--Before calling this function
+--you must access the Instance object with ` this.program.instance`.
+--The function returns an array with the Slot objects of the found slots.
+--Particular slots can be searched by name or through a filter function.
+--If searching by name, ` findSlots` accepts only the Slot objects
+--that match the specified name.
+--The filter function uses the Slot object of each slot as argument.
+--Only those Slot objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findSlots`.
+--Without a name or filter function the Slot objects
+--of all slots in the instance will be returned.
+--@function [parent=#Instance] findSlots
+--@param self
+--@param nameOrFilterFunction The name of the slots searched for or a filter function.
+--Only the Slot objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Slot> Returns an array with the Slot objects of the found slots.
+--Returns an empty table if no slots are found.
+
+-------------------------------------------------------------------------------
+--Function to find zones in the specified layer.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer to be searched in.
+--If recursive is set to ` true`, sublayers will also be searched.
+--The function returns an array with the Zone objects of the found zones.
+--Particular zones can be searched by name or through a filter function.
+--If searching by name, ` findZones` accepts only the Zone objects
+--that match the specified name.
+--The filter function uses the Zone object of each zone as argument.
+--Only those Zone objects that return ` true` for the search criteria
+--defined in the filter function will be accepted by ` findZones`.
+--Without a name or filter function the Zone objects of all zones
+--in the searched layers will be returned.
+--@function [parent=#Layer] findZones
+--@param self
+--@param #boolean recursive If set to ` false`,
+--only the current layer will be searched.
+--If set to ` true`, sublayers will also be searched. The default is ` false`.
+--@param nameOrFilterFunction The name of the zones searched for or a filter function.
+--Only the Zone objects that match the name or return ` true`
+--for the search criteria of the filter function will be accepted.
+--Set this to ` nil` to deactivate any name filter or search criteria.
+--@return #list <#Zone> Returns an array with the Zone objects of the found zones.
+--Returns an empty table if no zones are found.
+
+-------------------------------------------------------------------------------
+--Function to remove the specified parameter from its automation parameter.
+--@function [parent=#global] forgetAutomation
+--@param #Element element The Element object of the parameter to be removed.
+--@param nameOrID The name or ID of the parameter.
+
+-------------------------------------------------------------------------------
+--Function to obtain the number of bytes which have been allocated to the script in the memory.
+--@function [parent=#global] getAllocatedMemory
+--@return Returns the number of bytes which have been allocated to the script in the memory.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the index of the automation parameter
+--to which the specified parameter is assigned.
+--@function [parent=#global] getAutomationIndex
+--@param #Element element The Element object of the parameter to be connected.
+--@param #number nameOrID The ID of the parameter.
+--@return Returns the the index of the automation parameter
+--to which the specified parameter is assigned,
+--or ` nil` if the specified parameter is not assigned.
+
+-------------------------------------------------------------------------------
+--Function to obtain the duration of one bar in milliseconds.
+--@function [parent=#global] getBarDuration
+--@return Returns the duration of one bar in milliseconds
+--based on the current time signature and tempo.
+--If no time signature or tempo are available, this function returns the value -1.
+
+-------------------------------------------------------------------------------
+--Function to obtain the duration of one beat in milliseconds.
+--@function [parent=#global] getBeatDuration
+--@return Returns the duration of one beat in milliseconds.
+--The duration of one beat equals the length of a quarter note based on the current tempo.
+--If no tempo information is available, this function returns the value -1.
+
+-------------------------------------------------------------------------------
+--Function to obtain the current song position in number of beats (quarter notes).
+--@function [parent=#global] getBeatTime
+--@return When the host is in playback,
+--the function returns a decimal with the number of beats
+--(quarter notes) since the start of the song.
+--The start of the song equals 0 beats.
+--The function returns -1 if the host is not in playback.
+
+-------------------------------------------------------------------------------
+--Function to obtain the position in the current bar in number of beats (quarter notes).
+--@function [parent=#global] getBeatTimeInBar
+--@return When the host is in playback,
+--the function returns a decimal with the number of beats (quarter notes)
+--since the start of the current bar.
+--The start of the bar equals 0 beats.
+--The function returns -1 if the host is not in playback.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Bus object of a bus in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as the Element object to be searched in.
+--This function does not search in subelements.
+--A particular bus can be searched by name or position.
+--The position is the number indexing the busses in the specified Element object.
+--If several busses share the same name, only the first match will be returned.
+--If no argument is set, the function returns the first bus it finds.
+--@function [parent=#Layer] getBus
+--@param self
+--@param nameOrPosition The name or position of the bus.
+--Set this to ` nil` to deactivate the search filter.
+--@return #Bus Returns the Bus object of the found bus.
+--Returns ` nil` if no bus is found.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Bus object of a bus in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as the Element object to be searched in.
+--This function does not search in subelements.
+--A particular bus can be searched by name or position.
+--The position is the number indexing the busses in the specified Element object.
+--If several busses share the same name, only the first match will be returned.
+--If no argument is set, the function returns the first bus it finds.
+--@function [parent=#Instance] getBus
+--@param self
+--@param nameOrPosition The name or position of the bus.
+--Set this to ` nil` to deactivate the search filter.
+--@return #Bus Returns the Bus object of the found bus.
+--Returns ` nil` if no bus is found.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Bus object of a bus in the specified Element object.
+--For example, ` this.parent` specifies the parent of the script module
+--as the Element object to be searched in.
+--This function does not search in subelements.
+--A particular bus can be searched by name or position.
+--The position is the number indexing the busses in the specified Element object.
+--If several busses share the same name, only the first match will be returned.
+--If no argument is set, the function returns the first bus it finds.
+--@function [parent=#Slot] getBus
+--@param self
+--@param nameOrPosition The name or position of the bus.
+--Set this to ` nil` to deactivate the search filter.
+--@return #Bus Returns the Bus object of the found bus.
+--Returns ` nil` if no bus is found.
+
+-------------------------------------------------------------------------------
+--Function to read the current value of a continuous controller.
+--@function [parent=#global] getCC
+--@param #number controller The controller number.
+--@return Returns the current value of the continuous controller specified by the argument.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Element object of a child in the specified Element object.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the Element object to be searched in.
+--This function does not search in subelements.
+--A particular child can be searched by name or position.
+--The position is the number indexing the children in the specified Element object.
+--If several children share the same name, only the first match will be returned.
+--If no argument is set, the function returns the first child it finds.
+--@function [parent=#Element] getChild
+--@param self
+--@param nameOrPosition The name or position of the child.
+--Set this to ` nil` to deactivate the search filter.
+--@return #Element Returns the Element object of the found child.
+--Returns ` nil` if no child is found.
+
+-------------------------------------------------------------------------------
+--Function to obtain the name of the context.
+--@function [parent=#global] getContext
+--@return Returns a string with the name of the context in which the function is called.
+
+-------------------------------------------------------------------------------
+--The internal precision of parameter values is usually higher
+--than the precision of the corresponding display string on the user interface.
+--You can use this function to obtain the display string of the specified parameter and value.
+--You specify the parameter with ` getParameterDefinition`.
+--@function [parent=#ParameterDefinition] getDisplayString
+--@param self
+--@param value The value for the display string.
+--@return Returns the display string of the specified parameter and value.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Effect object of an effect from the specified bus.
+--You can use ` getBus` or ` findBusses` to specify the bus.
+--A particular effect can be searched by name or position.
+--The position is the number indexing the effects in the specified bus.
+--If several effects share the same name, only the first match will be returned.
+--If no argument is set, the function returns the first effect that it finds.
+--@function [parent=#Bus] getEffect
+--@param self
+--@param nameOrPosition The name or position of the effect.
+--Set this to ` nil` to deactivate the search filter.
+--@return #Effect Returns the Effect object of the found effect.
+--Returns ` nil` if no bus is found.
+
+-------------------------------------------------------------------------------
+--Function to obtain the Element object of an element that has a macro page.
+--If you call this function in the UI script of a macro page,
+--the Element object of the element to which the macro page is attached will be returned.
+--Depending on the element, the returned object can be of the type program,
+--layer, or MIDI module, for example.
+--This function can only be called in an UI script.
+--@function [parent=#global] getElement
+--@return #Element Returns the Element object of the element to which the macro page is attached.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the number of free voices of the plug-in instance.
+--@function [parent=#global] getFreeVoices
+--@return Returns the number of free voices of the plug-in instance.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the name of the host software.
+--@function [parent=#global] getHostName
+--@return Returns a string with the name of the host software.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the version of the host software.
+--@function [parent=#global] getHostVersion
+--@return Returns a string with the version of the host software.
+
+-------------------------------------------------------------------------------
+--Function to access the internal key properties array.
+--This array manages the colors and tooltips of the keys on the plug-in keyboard
+--and the instrument names that will be shown in Cubase's Drum Editor
+--when you use Create Drum Map from Instrument in the Inspector.
+--This function does not retrieve colors or tooltips from other MIDI modules
+--like MegaTrig, for example.
+--Therefore, the first time you call ` getKeySwitches`,
+--the returned array will be empty.
+--You must initialize the array by specifying each key property
+--using a table with a set of predefined fields.
+--The valid fields are listed below.
+--The index of the array must be in the range from 0 to 127.
+--Each index adresses the properties of the key with the corresponding note number.
+--You change the properties by creating a table for the desired index/key
+--and then you assign values to the fields ` .color`, ` .tooltip` or ` .drummap`.
+--Making changes to the properties of a key will override any properties
+--the key might have from other MIDI modules,
+--e.g., the tooltip and coloring from a key switch of a MegaTrig module,
+--even if the MIDI module is located earlier in the processing chain,
+--i.e., higher in the hierarchy of the Program Tree.
+--Any key properties from other script modules
+--that are later in the processing chain will also be overridden.
+--The key properties from the first script module in the Program Tree always have priority.
+--
+--Fields :
+--
+--* **.color** : The color of the key on the plug-in keyboard.
+--  There are twenty-four predefined colors.
+--  You set them with a number in the range from 1 to 24.
+--* **.tooltip** : The string for the tooltip of the key on the plug-in keyboard.
+--* **.drummap** : The string that will be shown as instrument name in Cubase's Drum Editor
+--  when you use Create Drum Map from Instrument in the Inspector.
+--@function [parent=#global] getKeyProperties
+--@return Returns the reference to the internal key properties array.
+
+-------------------------------------------------------------------------------
+--Function to access the internal key switch array.
+--This array manages the display of the key switches on the plug-in keyboard
+--and the information that is handed over to Cubase's Expression Map
+--when you use Import Key Switches in the Inspector.
+--This function does not retrieve key switches from other MIDI modules
+--like MegaTrig, for example.
+--The first time you call getKeySwitches, the returned array will be empty.
+--You must initialize the array by specifying each key switch
+--using a table with a set of predefined fields.
+--The valid fields are listed below.
+--The key switches you specify will be displayed on the plug-in keyboard with predefined colors
+--and the information from the ` .name` field displayed as tooltip.
+--You can use getKeyProperties to override the predefined colors.
+--Key colors retrieved from other MIDI modules will be overridden
+--by the key switches specified in the script.
+--If key switches from different script modules are assigned to the same keys,
+--the key switches of the script module that comes earlier in the processing chain
+--will override the key switches of script modules located behind them in the processing chain.
+--The specified key switches can be imported as an Expression Map in Cubase
+--by using Import Key Switches in the Inspector.
+--
+--Fields :
+--
+--* **.name** : The name of the key switch.
+--  It will be displayed as tooltip on the keyboard and in the Expression Map of Cubase.
+--* **.keyMin** : The note number of the lowest key in the range of 0 to 127.
+--* **.keyMax** : The note number of the highest key in the range of 0 to 127.
+--  If no value is set, this will default to keyMin.
+--* **.keyRemapped** : The note number of the remote key in the range of 0 to 127.
+--  If no value is set, this will default to -1.
+--@function [parent=#global] getKeySwitches
+--@return Returns the internal key switch array.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Layer object of a layer in the specified layer.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the layer to be searched in.
+--The function does not search in sublayers.
+--A particular layer can be searched by name or position.
+--The position is the number indexing the layers in the specified layer.
+--If several layers share the same name, only the first match will be returned.
+--If no argument is set, the function returns the first layer it finds.
+--@function [parent=#Layer] getLayer
+--@param self
+--@param nameOrPosition The name or position of the layer.
+--Set this to ` nil` to deactivate the search filter.
+--@return #Layer Returns the Layer object of the found layer.
+--Returns ` nil` if no layer is found.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the MidiModule object
+--of a MIDI module in the specified layer.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer to be searched in.
+--This function does not search in sublayers.
+--A particular MIDI module can be searched by name or position.
+--The position is the number indexing the MIDI modules in the specified layer.
+--If several MIDI modules share the same name, only the first match will be returned.
+--If no argument is set, the function returns the first MIDI module it finds.
+--@function [parent=#Layer] getMidiModule
+--@param self
+--@param nameOrPosition The name or position of the MIDI module.
+--Set this to ` nil` to deactivate the search filter.
+--@return #MidiModule Returns the MidiModule object of the found MIDI module.
+--Returns ` nil` if no MIDI module is found.
+
+-------------------------------------------------------------------------------
+--Function to obtain the ModulationMatrixRow object
+--of the specified modulation matrix row.
+--The modulation matrix row is determined by the Zone object of the zone
+--and the index of the modulation matrix row.
+--@function [parent=#Zone] getModulationMatrixRow
+--@param self
+--@param #number rowNumber The index of the modulation matrix row in the range from 1 to 32.
+--@return #ModulationMatrixRow The ModulationMatrixRow object of the specified modulation matrix row.
+
+-------------------------------------------------------------------------------
+--Function to obtain the current song position in milliseconds.
+--@function [parent=#global] getMsTime
+--@return #number When the host is in playback,
+--the function returns a decimal with the milliseconds since the start of the song.
+--The start of the song equals 0 ms. The function returns -1 if the host is not in playback.
+
+-------------------------------------------------------------------------------
+--Function to measure the time delta between the last note-on event
+--of the specified note and the call of this function.
+--@function [parent=#global] getNoteDuration
+--@param #number note The note number in the range of 0 to 127.
+--@return #number Returns the time delta in milliseconds.
+
+-------------------------------------------------------------------------------
+--Function to read the current value of a note expression of a specific note.
+--@function [parent=#global] getNoteExpression
+--@param #number noteID The note ID of the associated note.
+--@param type The note expression type. It can be determined via names or indices.
+--@return Returns the current value of the note expression determined by the arguments.
+--The function returns -1 if the value of the note expression has not been set yet.
+--
+--Enumerator to identify the different note expression types:
+--
+--* 1 NoteExpressionType.volume
+--* 2 NoteExpressionType.pan
+--* 3 NoteExpressionType.tuning
+--* 4 NoteExpressionType.custom1
+--* 5 NoteExpressionType.custom2
+--* 6 NoteExpressionType.custom3
+--* 7 NoteExpressionType.custom4
+--* 8 NoteExpressionType.custom5
+--* 9 NoteExpressionType.custom6
+--* 10 NoteExpressionType.custom7
+--* 11 NoteExpressionType.custom8
+
+-------------------------------------------------------------------------------
+--Function to access the internal array that manages the appearance of the custom note expressions.
+--In HALion, these are found in the Note Expression section and in Cubase,
+--in the Note Expression section of the Inspector.
+--For example, if your script generates note expression events,
+--you can give the associated custom note expressions meaningful names or you can hide them.
+--The first time you call getNoteExpressionProperties, the returned array will be empty.
+--You change the properites by assigning a table with the fields ` .name` or ` .block`
+--to the index of the array that corresponds to the custom note expression.
+--The indices from 4 to 11 correspond to the custom note expressions 1 to 8.
+--The properties defined by this script will override any properties
+--that come later in the processing chain.
+--
+--Fields:
+--
+--* **.name** : The name of the custom note expression.
+--  By default, HALion automatically creates a name for the custom note expression
+--  if it is assigned in the modulation matrix.
+--  The name you set with the ` .name` property
+--  and the automatically created name are both displayed.
+--  If the ` .block` property is set to ` true`,
+--  only the name set with the ` .name` property is displayed.
+--* **.block** : If set to ` true`,
+--  the properties that come later in the processing chain will not be evaluated.
+--  If no value is specified, this is set to ` false`.
+--  If the .block property is set to ` true`
+--  and the ` .name` property is not set or ` nil`,
+--  the name of the custom note expression will not be displayed in HALion and Cubase.
+--@function [parent=#global] getNoteExpressionProperties
+--@return Returns the reference to the internal note expression properties array.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the number of assignments of a quick control on the specified layer.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer with the desired quick control.
+--The qc argument is the index of the quick control with the requested assignments.
+--@function [parent=#Layer] getNumQCAssignments
+--@param self
+--@param #number qc The index of the quick control.
+--@return #number Returns the number of assignments of the specified layer and quick control.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the currently assigned output bus of a zone or bus.
+--@function [parent=#Bus] getOutputBus
+--@param self
+--@return #Bus Returns the Bus object of the currently assigned output bus
+--or ` nil` if the default routing is used.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the currently assigned output bus of a zone or bus.
+--@function [parent=#Zone] getOutputBus
+--@param self
+--@return #Bus Returns the Bus object of the currently assigned output bus
+--or ` nil` if the default routing is used.
+
+-------------------------------------------------------------------------------
+--Function to read the current value of a parameter.
+--The parameter can be determined by name or ID.
+--@function [parent=#Element] getParameter
+--@param self
+--@param nameOrID The name or ID of the parameter.
+--@return Returns the current value of the parameter
+--or ` nil` if the parameter doesn't exist.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the ParameterDefinition object for a parameter.
+--The parameter can be determined by name or ID.
+--The ParameterDefinition object describes the properties of a parameter.
+--@function [parent=#Element] getParameterDefinition
+--@param self
+--@param nameOrID The name or ID of the parameter.
+--@return #ParameterDefinition Returns the ParameterDefinition object for the specified parameter.
+
+-------------------------------------------------------------------------------
+--Function to read the current value of a parameter in the normalized range from 0 to 1.0.
+--The parameter can be determined by name or ID.
+--@function [parent=#Element] getParameterNormalized
+--@param self
+--@param nameOrID The name or ID of the parameter.
+--@return Returns the current value of the parameter in the normalized range from 0 to 1.0
+--or ` nil` if the parameter doesn't exist.
+--If the parameter is not numeric, the function returns the same as ` getParameter`.
+
+-------------------------------------------------------------------------------
+--Function to analyze the levels in an audio file.
+--You specify the audio file with the AudioFile object
+--that is returned by the AudioFile.open function.
+--The arguments start and length define the range in the audio file to be analyzed.
+--The rms argument determines whether the peak level
+--or the RMS level of the specified range is returned.
+--@function [parent=#AudioFile] getPeak
+--@param self
+--@param #number start The start position in samples.
+--@param #number length The duration in samples.
+--Set this to equal to or less than 0 to use all samples from the specified start to the end of the file.
+--@param #number rms If this is set to 0, the peak level of the specified range will be returned.
+--If this is set to a value above 0, the RMS level over the specified range will be calculated.
+--@return Returns the level of the specifed range as a linear value.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the name of the plug-in.
+--@function [parent=#global] getProductName
+--@return Returns a string with the name of the plug-in.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the version of the plug-in.
+--@function [parent=#global] getProductVersion
+--@return Returns a string with the version of the plug-in.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Program object of a program in the Program Table of the plug-in instance.
+--Before calling this function
+--you must access the Instance object with ` this.program.instance`.
+--The index corresponds to the number of the slot in the Program Table where the program is set.
+--The function returns the Program object of the program with the specified index.
+--@function [parent=#Instance] getProgram
+--@param self
+--@param #number index The index of the slot in the Program Table where the program is set.
+--@return #Program Returns the Program object of the program with the specified index.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the bypass state of the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment with the requested bypass state.
+--The indices of the quick controls and the assignments both start counting from 1.
+--@function [parent=#Layer] getQCAssignmentBypass
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@return Returns the bypass state of the specified quick control assignment as boolean value.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the curve value of the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment with the requested curve value.
+--The indices of the quick controls and the assignments both start counting from 1.
+--@function [parent=#Layer] getQCAssignmentCurve
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@return #number Returns the curve value of the specified quick control assignment.
+--The value range is -100 % to +100 %.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the maximum value of the specified quick control assignment.
+--The quick control assignment is determined by the Layer,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment with the requested maximum value.
+--The indices of the quick controls and the assignments both start counting from 1.
+--@function [parent=#Layer] getQCAssignmentMax
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@return Returns the maximum value of the specified quick control assignment.
+--The value range is always 0 to 100 %,
+--even if the mode of the quick control assignment is set to Relative or Switch Relative.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the minimum value of the specified quick control assignment.
+--The quick control assignment is determined by the Layer,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment with the requested minimum value.
+--The indices of the quick controls and the assignments both start counting from 1.
+--@function [parent=#Layer] getQCAssignmentMin
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@return Returns the minimum value of the specified quick control assignment.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the mode that is set for the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment with the requested mode.
+--The indices of the quick controls and the assignments both start counting from 1.
+--@function [parent=#Layer] getQCAssignmentMode
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@return Returns the mode that is set for the specified quick control assignment as a number.
+--The mode can be determined via names or indices.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the parameter ID of the parameter
+--that is connected to the specified quick control assignment.
+--The quick control assignment is determined by the Layer,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment with the requested parameter.
+--The indices of the quick controls and the assignments both start counting from 1.
+--@function [parent=#Layer] getQCAssignmentParamId
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@return Returns the parameter ID of the parameter connected to the specified quick control assignment.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the element object that is set as scope for the specified quick control assignment.
+--The quick control assignment is determined by the Layer object of the layer,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment with the requested scope.
+--The indices of the quick controls and the assignments both start counting from 1.
+--@function [parent=#Layer] getQCAssignmentScope
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@return Returns the element object that is set as scope for the specified quick control assignment.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the sample rate from the host software.
+--@function [parent=#global] getSamplingRate
+--@return Returns the sample rate of the host software in Hertz (i.e., samples per seconds).
+
+-------------------------------------------------------------------------------
+--Function to read the duration of the script execution time-out
+--either for the controller or the processor thread,
+--depending on where getScriptExecTimeOut is called.
+--The duration for the script execution time-out is returned in milliseconds.
+--The default is 5000 ms for the controller thread and 1000 ms for the processor thread.
+--@function [parent=#global] getScriptExecTimeOut
+--@return Returns the duration of the script execution time-out in milliseconds
+--either for the controller or the processor thread.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the version of the script engine.
+--@function [parent=#global] getScriptVersion
+--@return Returns a string with the version of the script engine.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Slot object of a slot of the plug-in instance.
+--Before calling this function
+--you must access the Instance object with ` this.program.instance`.
+--A particular slot can be searched by name or index.
+--The index equals the slot numbering in the Slot Rack.
+--If no argument is set, the function returns the first slot it finds.
+--@function [parent=#Instance] getSlot
+--@param self
+--@param nameOrIndex The name or index of the slot.
+--Set this to ` nil` to deactivate the search filter.
+--@return #Slot Returns the Slot object of the found slot.
+--Returns ` nil` if no slot is found.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the index of the slot in which the program is loaded.
+--@function [parent=#global] getSlotIndex
+--@return #number Returns the index of the slot in which the program is loaded.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the 1st modulation source of a row in the modulation matrix.
+--The row is specified with the Zone object of the zone
+--and the index of the modulation matrix row.
+--@function [parent=#ModulationMatrixRow] getSource1
+--@param self
+--@return Returns up to three values, i.e., source, sourceInfo1 and sourceInfo2.
+--The number of return values depends on the modulation source.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the 2nd modulation source of a row in the modulation matrix.
+--The row is specified with the Zone object of the zone
+--and the index of the modulation matrix row.
+--@function [parent=#ModulationMatrixRow] getSource2
+--@param self
+--@return Returns up to three values, i.e., source, sourceInfo1 and sourceInfo2.
+--The number of return values depends on the modulation source.
+
+-------------------------------------------------------------------------------
+--Function to read the tempo of the host software.
+--@function [parent=#global] getTempo
+--@return Returns the current tempo in beats per minute (BPM).
+--If no tempo information is available, this function returns the value -1.
+
+-------------------------------------------------------------------------------
+--Function to obtain the time in milliseconds since the initialization of the script.
+--@function [parent=#global] getTime
+--@return Returns the time in milliseconds since the initialization of the script.
+
+-------------------------------------------------------------------------------
+--Function to read the time signature from the host software.
+--@function [parent=#global] getTimeSignature
+--@return Returns the numerator and denominator of the time signature.
+--If no time signature information is available,
+--the value -1 is returned for both the numerator and the denominator.
+
+-------------------------------------------------------------------------------
+--Function to check if the current script execution is part of an undo or redo operation.
+--The function returns:
+--
+--* **1** if the changes come from an undo operation,
+--* **2** if the changes come from a redo operation,
+--* **nil** if the changes do not come from an undo or redo operation.
+--
+--You can use the following enumerators to identify the Undo Context Types:
+--
+--* **1** *UndoContext.inUndo*
+--* **2** *UndoContext.inRedo*
+--@function [parent=#global] getUndoContext
+--@return 1, 2 or nil
+
+-------------------------------------------------------------------------------
+--Function to obtain the amount of memory that is used by the script.
+--@function [parent=#global] getUsedMemory
+--@return Returns the number of bytes in the memory that are used by the script.
+
+-------------------------------------------------------------------------------
+--Function to obtain the number of used voices of the plug-in instance.
+--If the initiation of a zone and the call of ` getUsedVoices` happen in the same audio block,
+--the voice count which is returned might not be up-to-date.
+--To prevent this, wait for the next audio block before calling this function.
+--@function [parent=#global] getUsedVoices
+--@return Returns the number of used voices of the plug-in instance.
+
+-------------------------------------------------------------------------------
+--Function to obtain the number of used voices of the slot in which a program is loaded.
+--If the initiation of a zone and the call of ` getUsedVoicesOfSlot` happen in the same audio block,
+--the voice count which is returned might not be up-to-date.
+--To prevent this, wait for the next audio block before calling this function.
+--@function [parent=#global] getUsedVoicesOfSlot
+--@return Returns the number of used voices of the corresponding slot.
+
+-------------------------------------------------------------------------------
+--Function to obtain the file path for the user VST presets of a product.
+--If no product argument is set,
+--the function returns the file path of the current plug-in.
+--@function [parent=#global] getUserPresetPath
+--@param #string product The name of the product. Optional
+--@return Returns the file path for the user VST presets of the specified product.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the maximum number of voices of the plug-in instance
+--as set in the Options editor.
+--@function [parent=#global] getVoices
+--@return Returns the maximum number of voices of the plug-in instance.
+
+-------------------------------------------------------------------------------
+--Function to retrieve the Zone object of a zone in the specified layer.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer to be searched in.
+--This function does not search in sublayers.
+--A particular zone can be searched by name or position.
+--The position is the number indexing the zones in the specified layer.
+--If several zones share the same name, only the first match will be returned.
+--If no argument is set, the function returns the first zone it finds.
+--@function [parent=#Layer] getZone
+--@param self
+--@param nameOrPosition The name or position of the zone.
+--Set this to ` nil` to deactivate the name filter.
+--@return #Zone Returns the Zone object of the found zone.
+--Returns ` nil` if no zone is found.
+
+-------------------------------------------------------------------------------
+--Function to check if a parameter exists.
+--The parameter can be determined by name or ID.
+--@function [parent=#Element] hasParameter
+--@param self
+--@param nameOrID The name or ID of the parameter.
+--@return #boolean Returns ` true` if the parameter exists or ` false` if not.
+
+-------------------------------------------------------------------------------
+--Function to insert a bus at the specified position in the destination layer.
+--The bus to be inserted is determined by its Bus object.
+--You can use ` getBus` or ` findBusses` to determine the bus.
+--The destination layer is determined by its Layer object.
+--For example, ` this.parent` sets the parent layer of the script module
+--as destination layer.
+--The position is the number indexing the existing busses in the destination layer.
+--The new bus will be inserted before the specified position.
+--To add the bus at the end, use appendBus instead.
+--@function [parent=#Layer] insertBus
+--@param self
+--@param #Bus bus The Bus object of the bus that you want to insert.
+--@param #number position The position where the bus is inserted.
+
+-------------------------------------------------------------------------------
+--Function to insert an effect at a specific position in a destination bus.
+--The effect to be inserted is determined by its Effect object.
+--You can use ` getEffect` or ` findEffects` to determine the effect.
+--The destination bus is determined by its Bus object.
+--You can use ` getBus` or ` findBusses` to determine the destination bus.
+--The position is the number indexing the effects in the destination bus.
+--The new effect will be inserted before the specified position.
+--To add the effect at the end, use appendEffect instead.
+--@function [parent=#Bus] insertEffect
+--@param self
+--@param #Effect effect The element object of the effect that you want to insert.
+--@param #number position The position where the effect is inserted.
+
+-------------------------------------------------------------------------------
+--Function to insert an envelope point in the specified envelope.
+--You specify the envelope by calling ` getParameter`
+--with the EnvelopePoints parameter of the desired envelope as argument.
+--If you call ` getParameter` with the EnvelopePoints parameter as argument,
+--an array with the current envelope points will be returned.
+--Each index of the array represents an envelope point
+--with the fields ` .level`, ` .duration` and ` .curve`.
+--The insertEnvelopePoint function modifies this array.
+--To apply the changes, you must use setParameter
+--with the EnvelopePoints parameter of the envelope as argument
+--and the array as value.
+--@function [parent=#global] insertEnvelopePoint
+--@param #table envelopeArray An array with envelope points.
+--Each index of the array represents an envelope point
+--with the fields ` .level`, ` .duration` and ` .curve`.
+--To obtain the envelope array of an envelope, use ` getParameter`
+--with the EnvelopePoints parameter of the desired envelope as argument.
+--@param #number index The index of the point where the new point will be inserted.
+--The new point will be inserted before this point.
+--@param #number level The level of the new point in the range from
+--0 to 1  for the filter and amplitude envelope
+--or -1 to 1  for the pitch and user envelope.
+--@param #number duration The duration of the new point in the range from 0 to 30 seconds.
+--The duration of the first point is always 0 seconds.
+--@param #number curve The curve of the new point in the range from -1 to 1.
+
+-------------------------------------------------------------------------------
+--Function to insert an event in the specified events table according to its PPQ position.
+--The events table is part of a tracks table which is part of the MIDI sequence table.
+--@function [parent=#global] insertEvent
+--@param #table eventsTable The table record referencing the events table.
+--@param #Event event The Event object to be inserted.
+
+-------------------------------------------------------------------------------
+--Function to insert a layer at a specific position in a destination layer.
+--The layer to be inserted and the destination layer
+--are both determined by their Layer objects.
+--You can use ` getLayer` or ` findLayers` to determine the layer to be inserted.
+--For example, ` this.parent` determines the parent layer of the script module
+--as destination layer.
+--The position is the number indexing the existing layers in the destination layer.
+--The new layer will be inserted before the specified position.
+--To add the layer at the end, use ` appendLayer` or ` appendLayerAsync` instead.
+--@function [parent=#Layer] insertLayer
+--@param self
+--@param #Layer layer The Layer object of the layer that you want to insert.
+--@param #number position The position where the layer is to bei inserted.
+
+-------------------------------------------------------------------------------
+--Function to insert a layer at a specified position in a destination layer
+--using a separate, parallel thread.
+--Inserting a layer in a separate thread can be necessary
+--if the layer is too big to be inserted in a short time.
+--The layer to be inserted and the destination layer
+--are both determined by their Layer objects.
+--You can use ` getLayer` or ` findLayers` to determine the layer to be inserted.
+--For example, ` this.parent` determines the parent layer of the script module
+--as destination layer.
+--The position is the number indexing the existing layers in the destination layer.
+--The new layer will be inserted before the specified position.
+--To add the layer at the end, use ` appendLayer` or ` appendLayerAsync` instead.
+--The function returns a LoadProgress object that can be used to monitor the load progress.
+--After the layer is inserted, the callback function is called.
+--The callback function gets the LoadProgress object as default argument.
+--@function [parent=#Layer] insertLayerAsync
+--@param self
+--@param #Layer layer The Layer object of the layer that you want to insert.
+--@param #number position The position where the layer is to be inserted.
+--@param callback Callback function that is called when the layer is inserted.
+--The callback function gets the LoadProgress object as argument. Optional.
+--@return #LoadProgress Returns a LoadProgress object.
+--
+--Fields:
+--
+--* **.progress** : The load progress in the range from 0 to 1.
+--* **.root** : The value of ` .root` will be the Element object
+--  of the first element (root) of the loaded VST preset.
+--  Depending on whether you load a layer, program, or multi-program VST preset,
+--  this is either an Element object of the type Layer, Program,or Instance.
+--* **.cancel** : Set this to true to cancel the loading of the preset.
+--* **.error** : Message if an error occured.
+--* **.info** : User definable field, for example, to manage several loading threads.
+
+-------------------------------------------------------------------------------
+--Function to insert a MIDI module
+--at the specified position in the determined destination layer.
+--The MIDI module to be inserted is determined by its MidiModule object.
+--You can use ` getMidiModule` or ` findMidiModules` to determine the desired MIDI module.
+--The destination layer is determined by its Layer object.
+--For example, ` this.parent` determines the parent layer of the script module
+--as destination layer.
+--The position is the number indexing the existing MIDI modules in the destination layer.
+--The new MIDI module will be inserted before the specified position.
+--To add the MIDI module at the end, use appendMidiModule instead.
+--@function [parent=#Layer] insertMidiModule
+--@param self
+--@param #MidiModule module The MidiModule object of the MIDI module that you want to insert.
+--@param #number position The position where the MIDI module is inserted.
+
+-------------------------------------------------------------------------------
+--Function to insert a zone at the specified position in the determined layer.
+--The zone to be inserted is determined by its Zone object.
+--You can use ` getZone` or ` findZones` to determine the desired zone.
+--The destination layer is determined by its Layer object.
+--For example, ` this.parent` determines the parent layer of the script module
+--as destination layer.
+--The position is the number indexing the existing zones in the destination layer.
+--The new zone will be inserted before the specified position.
+--To add the zone at the end, use ` appendZone` instead.
+--@function [parent=#Layer] insertZone
+--@param self
+--@param #Zone zone The Zone object of the zone that you want to insert.
+--@param #number position The position where the zone is inserted.
+
+-------------------------------------------------------------------------------
+--Function to detect whether a key with a specific note number is held or not.
+--@function [parent=#global] isKeyDown
+--@param #number note The note number in the range of 0 to 127.
+--@return #boolean Returns ` true` if the key with the specified note number is held
+--and ` false` if the key has been released.
+--The note events must come from outside the script,
+--e.g., from the host software or another MIDI module.
+
+-------------------------------------------------------------------------------
+--Function to detect inside the onNote callback function if a note is held or not.
+--` isNoteHeld` is specific to the onNote callback function.
+--Calling this function inside other callback functions is not permitted.
+--@function [parent=#global] isNoteHeld
+--@return #boolean Returns ` true` if ` onNote` has received a note-on event
+--and ` false`  if ` onNote` has received a corresponding note-off event.
+--The note events must come from outside the script,
+--e.g., from the host software or another MIDI module.
+
+-------------------------------------------------------------------------------
+--Function to detect whether a key is held or not, regardless of the octave.
+--@function [parent=#global] isOctaveKeyDown
+--@param #number note The note number which specifies the key in the range of 0 to 127.
+--@return #boolean Returns ` true` if the specified key is held, no matter in which octave.
+--The function returns ` false` if the specified key and any octave keys have been released.
+--The note events must come from outside the script,
+--e.g., from the host software or another MIDI module.
+
+-------------------------------------------------------------------------------
+--Function to detect whether the host is in playback.
+--@function [parent=#global] isPlaying
+--@return #boolean Returns ` true` if the host is in playback and ` false` if not.
+
+-------------------------------------------------------------------------------
+--Function to load the elements of a VST preset.
+--Depending on whether you load a layer, program or multi-program VST preset,
+--the function returns either an Element object of the type Layer, Program or Instance.
+--You can use the returned Element object to insert layers,
+--zones, MIDI modules, busses, effects, etc.
+--from the VST preset into the program or HALion instance where the script is executed.
+--@function [parent=#global] loadPreset
+--@param #string path The path and file name of the VST preset.
+--@return #Layer, #Program, #Instance Returns an Element object of the type Layer, Program or Instance,
+--depending on whether a layer, program or multi-program VST preset was loaded.
+
+-------------------------------------------------------------------------------
+--Function to load the elements of a VST preset in a separate, parallel thread.
+--Loading the VST preset in a separate thread can be necessary
+--if the preset is too big to be loaded in a short time.
+--The function returns a LoadProgress object
+--that can be used to get information on the load progress
+--and the loaded elements, for example.
+--After the preset is loaded, the callback function is called.
+--The callback function gets the LoadProgress object as default argument.
+--@function [parent=#global] loadPresetAsync
+--@param #string path The path and file name of the VST preset.
+--@param callback Callback function that is called after the preset is loaded.
+--The callback function gets the LoadProgress object as argument.
+--@return #LoadProgress Returns a LoadProgress object.
+--
+--Fields:
+--
+--* **.progress** : The load progress in the range from 0 to 1.
+--* **.root** : The value of ` .root` will be the Element object
+--  of the first element (root) of the loaded VST preset.
+--  Depending on whether you load a layer, program, or multi-program VST preset,
+--  this is either an Element object of the type Layer, Program,or Instance.
+--* **.cancel** : Set this to true to cancel the loading of the preset.
+--* **.error** : Message if an error occured.
+--* **.info** : User definable field, for example, to manage several loading threads.
+
+-------------------------------------------------------------------------------
+--Function to open a modal message box.
+--If the argument is a single string,
+--the text will be displayed in the default message box.
+--Alternatively, you can customize the message box by using a configuration table,
+--e.g., if you want to display the text with a warning icon.
+--The message box can be configured by creating a table with the following fields:
+--
+--* **.type** : The type of the message box defines which icon will be displayed.
+--  It can be determined via names or indices.
+--  The default is MessageBoxType.information. (enum or number)
+--* **.text** : The text that will be displayed. (string)
+--* **.button1** : This button is always displayed.
+--  The default string is "OK". (string optional)
+--* **.button2** : This button will only be displayed
+--  if you assign a string to this field. (string optional)
+--* **.button3** : This button will only be displayed
+--  if you assign a string to this field. (string optional)
+--
+--Message Box Types:
+--
+--* 1 MessageBoxType.warning
+--* 2 MessageBoxType.question
+--* 3 MessageBoxType.information
+--
+--Message Box Results:
+--
+--* 1 MessageBoxResult.escape
+--* 2 MessageBoxResult.button1
+--* 3 MessageBoxResult.button2
+--* 4 MessageBoxResult.button3
+--
+--@function [parent=#global] messageBox
+--@param stringOrConfigTable The message as a string
+--or the configuration table that customizes the message box.
+--@return Returns the result of the message box,
+--i.e., which action closed the message box, as a number.
+
+-------------------------------------------------------------------------------
+--Function to convert a duration in milliseconds to the equivalent number of beats.
+--One beat equals a quarter note. The current tempo is taken into account.
+--@function [parent=#global] ms2beat
+--@param #number ms The duration in milliseconds.
+--@return #number Returns the number of beats (quarter notes)
+--that is the equivalent of the specified duration.
+
+-------------------------------------------------------------------------------
+--Function to convert a duration in milliseconds to the equivalent number of samples.
+--The conversion takes into account the sample rate at which the plug-in runs.
+--@function [parent=#global] ms2samples
+--@param #number ms The duration in milliseconds.
+--@return #number Returns the number of samples
+--that is the equivalent of the specified duration in milliseconds.
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when the script module receives a channel aftertouch event.
+--If the script doesn't implement ` onAfterTouch`,
+--all aftertouch events will be passed on to ` onController`.
+--
+--Fields:
+--
+--* **.type** : The type of event (3 = controller).
+--* **.value** : The aftertouch value in the range of 0 to 127.
+--@function [parent=#global] onAfterTouch
+--@param #Event event  Event object of the type controller.
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when the script module receives a continuous controller event.
+--If the script doesn't implement ` onAfterTouch` or ` onPitchBend`,
+--the respective aftertouch or pitch bend events will be passed on to ` onController`.
+--This way, continuous controller, aftertouch and pitch bend events
+--can be treated in the same callback function ` onController`.
+--
+--Fields:
+--
+--* **.type** : The type of event (3 = controller).
+--* **.controller** : The controller number.
+--* **.value** : The controller value in the range of 0 to 127.
+--@function [parent=#global] onController
+--@param #Event event  Event object of the type controller.
+
+-------------------------------------------------------------------------------
+--This callback function is called after executing any global statements
+--and the ` onLoadIntoSlot` callback function.
+--It is the first callback function that is called when the processor thread is initialized.
+--You can use this function to initialize variables
+--with information from the context, for example.
+--@function [parent=#global] onInit
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when the script module is loaded as part of a preset or project.
+--The data that is passed on is the data that was returned by ` onSave`
+--when the script module was saved.
+--@function [parent=#global] onLoad
+--@param data The data that was returned by ` onSave`.
+
+-------------------------------------------------------------------------------
+--This callback function is called when the program is loaded into the Slot Rack.
+--Any global statements are executed in advance.
+--` onInit` is called after ` onLoadIntoSlot`.
+--@function [parent=#global] onLoadIntoSlot
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when loading a subpreset with a corresponding Preset Browser template.
+--The callback will only be called
+--if the scope of the Preset Browser template is set correctly.
+--
+--* If the MacroPage with the Preset Browser template is attached to an element other than the script module
+--  (e.g., the program), the scope must be set to the script module (e.g., @0:Script Module).
+--* If the MacroPage with the Preset Browser template is attached to the script module,
+--  the scope does not need to be set.
+--
+--In adition, the Preset Browser Custom template allows you to define a section for the subpreset.
+--When you load a subpreset, the defined section and the data stored in the subpreset will be passed on to the callback.
+--The data is the same data that was returned by onSaveSubPreset when the subpreset was saved.
+--You can manage different subsets of parameters by using the section as condition for an if statement
+--that restores only the parameters of interest.
+--@function [parent=#global] onLoadSubPreset
+--@param #string section The section as defined in the Preset Browser Custom template.
+--@param data The data that was returned by ` onSaveSubPreset`.
+
+-------------------------------------------------------------------------------
+--This callback function is called when the script module receives a note-on event.
+--
+--Fields:
+--
+--* **.type** : The type of event (1 = noteOn).
+--* **.id** : The note ID of the note-on event.
+--* **.note** : The note number in the range of 0 to 127.
+--* **.velocity** : The note-on velocity in the range of 0 to 127.
+--
+--@function [parent=#global] onNote
+--@param #Event event Event object of the type noteOn.
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when the script module receives a note expression event.
+--Note expression events are always processed by the engine,
+--regardless of whether the event is posted or not.
+--Therefore, the use of postEvent is not necessary.
+--
+--Fields:
+--
+--* **.type** : The type of event (4 = noteExpression).
+--* **.id** : The ID of the associated note-on event.
+--* **.noteExpressionType** : The type of note expression event.
+--* **.value** : The note expression value in the range of 0 to 1.0.
+--
+--@function [parent=#global] onNoteExpression
+--@param #Event event  Event object of the type noteExpression.
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when the script module receives a pitch bend event.
+--The ` .value` field of the Event object contains the pitch bend value
+--as a signed integer in the range from -8191 to 8191.
+--The ` .bend` field contains the pitch bend value
+--as a floating point number in the range from -1.0 to 1.0.
+--Use ` .bend` for greater accuracy.
+--If your script doesn't implement ` onPitchBend`,
+--all pitch bend events will be passed on to ` onController`.
+--
+--Fields:
+--
+--* **.type** : The type of event (3 = controller).
+--* **.bend** : The pitch bend value in the range of -1.0 to 1.0.
+--* **.value** : The pitch bend value in the range of -8191 to 8191.
+--
+--@function [parent=#global] onPitchBend
+--@param #Event event  Event object of the type controller.
+
+-------------------------------------------------------------------------------
+--This callback function is called when the script module receives a note-off event.
+--
+--Fields:
+--
+--* **.type** : The type of event (2 = noteOff).
+--* **.id** : The note ID of the note-off event.
+--* **.note** : The note number in the range of 0 to 127.
+--* **.velocity** : The note-off velocity in the range of 0 to 127.
+--
+--@function [parent=#global] onRelease
+--@param #Event event  Event object of the type noteOff.
+
+-------------------------------------------------------------------------------
+--This callback function is called when the program is removed from the Slot Rack.
+--@function [parent=#global] onRemoveFromSlot
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when the script module is saved as part of a preset or project.
+--The data you pass on to the return statement will be stored with the preset or project.
+--The data can be of any type, but it is common practice to use a table
+--that can easily be extended with more fields.
+--When the script module is restored,
+--the ` onLoad` callback will receive the stored data.
+--@function [parent=#global] onSave
+--@return The returned data will be stored as part of the preset or project.
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when saving a subpreset with a corresponding Preset Browser template.
+--The callback will only be called
+--if the scope of the Preset Browser template is set correctly.
+--
+--* If the MacroPage with the Preset Browser template is attached
+--  to an element other than the script module
+--  (e.g., the program), the scope must be set to the script module (e.g., @0:Script Module).
+--* If the MacroPage with the Preset Browser template is attached to the script module itself,
+--  the scope does not need to be set.
+--
+--In addition, the Preset Browser Custom template allows to define a section for the subpreset.
+--When you save a subpreset, the section will be passed on from the Preset Browser Custom template to the callback.
+--You can manage different subsets of parameters by using the section as condition for an if statement
+--that stores only the parameters of interest.
+--The data you pass on to the return statement will be stored with the subpreset.
+--The data can be of any type, but it is common practice to use a table
+--that can easily be extended with more fields.
+--When the subpreset is restored,
+--the ` onLoadSubPreset` callback will receive the stored data.
+--
+--@function [parent=#global] onSaveSubPreset
+--@param #string section The section as defined in the Preset Browser Custom template.
+--@return The returned data will be stored in a subpreset.
+
+-------------------------------------------------------------------------------
+--This callback function is called
+--when the script module receives a trigger event from a trigger pad.
+--The Trigger Pads module must be placed before the script module.
+--Trigger events are produced when the pad is pressed with the mouse,
+--when a trigger note is played via MIDI or by calling ` playTriggerPad` from another script module.
+--To be able to alter the trigger events,
+--the function onPad does not pass on the trigger events automatically.
+--To pass on the trigger events to subsequent modules,
+--` playTriggerPad` must be called.
+--@function [parent=#global] onTriggerPad
+--@param #number number The number of the trigger pad in the range from 1 to 8.
+
+-------------------------------------------------------------------------------
+--This callback function is called when the script module receives an event
+--that is not handled by the specific event callback functions,
+--e.g., onNote, onRelease, onController and onNoteExpression.
+--If none of the specific callback functions are defined,
+--onUnhandledEvent will receive all incoming events.
+--@function [parent=#global] onUnhandledEvent
+--@param #Event event The Event object.
+
+-------------------------------------------------------------------------------
+--Function to open a  website in the web browser.
+--@function [parent=#global] openURL
+--@param #string adress The internet adress of the website.
+
+-------------------------------------------------------------------------------
+--Function to generate pitch bend events.
+--@function [parent=#global] pitchBend
+--@param #number value The pitch bend value in the range of -1.0 to 1.0.
+
+-------------------------------------------------------------------------------
+--Function to generate note events.
+--
+--* If duration is -1 the generated note plays as long as the key that called playNote is held.
+--* If duration is greater 0 the note plays as long as the key is held,
+--  but maximum for the time specified in milliseconds.
+--* If duration is 0 playNote generates only the note-on event.
+--  The release can be managed manually with ` onRelease` or with ` releaseVoice`
+--  and the ID returned by ` playNote`.
+--
+--Arguments *duration* , *layerOrZone* , *volume* , *pan* , *tune* are optional.
+--@function [parent=#global] playNote
+--@param #number note The note number of the note in the range of 0 to 127.
+--@param #number velocity The velocity of the note in the range of 0 to 127.
+--@param duration The length of the note in milliseconds.
+--The default is -1. Optional.
+--@param layerOrZone The layer or zone which shall receive the note.
+--Only elements after the script module are addressable.
+--The default is ` nil` (all layers). Optional.
+--@param volume The initial volume in the range of 0 to 1.0.
+--The default is 1.0. Optional.
+--@param pan The initial pan position in the range of -1.0 to 1.0.
+--The default is 0. Optional.
+--@param tune The initial tuning in the range of -120.0 to 120.0.
+--The default is 0. Optional.
+--@return Returns the note ID of the generated note.
+
+-------------------------------------------------------------------------------
+--Function to send the trigger events of the Trigger Pads to subsequent modules of the script module.
+--This function does not trigger the pads of the Trigger Module.
+--It only changes the state of the trigger pads in the depending modules,
+--for example, to switch between the variations of a FlexPhraser or MIDI Player.
+--@function [parent=#global] playTriggerPad
+--@param #number number The number of the trigger pad in the range from 1 to 8.
+
+-------------------------------------------------------------------------------
+--Function to post the event to the engine.
+--The second argument is optional.
+--It allows you to delay the event by a specific time in milliseconds.
+--@function [parent=#global] postEvent
+--@param #Event event The Event object that will be posted.
+--@return Returns a note ID in case of a note-on event,
+--` nil` for any other type of event.
+--For this reason, assigning the return value of postEvent to a variable
+--is only meaningful in the onNote callback.
+
+-------------------------------------------------------------------------------
+--Receives any number of arguments and prints their values
+--to the output window of the script module.
+--In contrast to Lua's print function,
+--printRaw does not insert a space character after every value
+--and does not add a line feed on the end.
+--@function [parent=#global] printRaw
+--@param ... The values to be printed.
+--Multiple arguments must be separated with commas.
+
+-------------------------------------------------------------------------------
+--Function to read a MIDI file (.mid).
+--The function creates a MIDI sequence table
+--that contains the data of the MIDI file.
+--This table allows you to change values
+--and add or remove notes like with normal Lua tables,
+--but the structure of that table must remain as defined below.
+--
+--MIDI Sequence Fields:
+--
+--* **.format** : The MIDI file format. It can be determined via names or indices.
+--  * MidiFileFormat.singleMultiChannelTrack or 0 = Format 0 (one single multi-channel track)
+--  * MidiFileFormat.simultaneousTracks or 1 = Format 1 (one or more tracks to be played simultaneously)
+--  The default is format 0.
+--* **.smpteformat** : The SMPTE format.
+--  * 0 = Ticks per beat
+--  * -24 = Ticks per frame at 24 frames per second
+--  * -25 = Ticks per frame at 25 frames per second
+--  * -29 = Ticks per frame at 30 frames per second, drop frame
+--  * -30 = Ticks per frame at 30 frames per second, non-drop frame
+--  The default format is 0.
+--* **.division** : Specifies the ticks used for the SMPTE format.
+--  The default is 480 ticks.
+--* **.tempo** : The original tempo in beats per minute.
+--  The default is 120 BPM.
+--* **.signature** : The time signature of the MIDI file as a table.
+--  Numerator and denominator are separate fields of that table.
+--* **.songname** : The name of the song.
+--* **.tracks** : The tracks of the MIDI file as an array with the index starting at 1.
+--  Name, channel and event are separate fields of that table.
+--
+--Signature Table Fields:
+--
+--* **.numerator** : The numerator of the time signature. The default is 4.
+--* **.denominator** : The denominator of the time signature. The default is 4.
+--
+--Tracks Table Fields:
+--
+--* **.name** : The name of the track.
+--* **.channel** : The MIDI channel of the track. The default is 1.
+--* **.events** : The events of the track as an array with the index starting at 1.
+--  The events are stored as Event objects.
+--
+--@function [parent=#global] readMidiFile
+--@param #string path The path and file name of the MIDI file.
+--@return #MidiSequenceTable Returns a MIDI sequence table.
+
+-------------------------------------------------------------------------------
+--Function to release a note with a specific note ID.
+--@function [parent=#global] releaseVoice
+--@param #number noteID The note ID of the note you want to release.
+
+-------------------------------------------------------------------------------
+--Function to remove a bus from the specified layer.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the layer that contains the bus.
+--The bus to be removed is determined by its Bus object or its position.
+--You can use ` getBus` or ` findBusses` to determine the Bus object.
+--The position is the number that indexes the busses in the specified layer.
+--@function [parent=#Layer] removeBus
+--@param self
+--@param busOrPosition The Bus object or the position of the bus to be removed.
+
+-------------------------------------------------------------------------------
+--Function to remove an effect from a bus.
+--You can use ` getBus` or ` findBusses` to define the bus that contains the effect.
+--The effect to be removed is determined by its Effect object or its position.
+--You can use ` getEffect` or ` findEffects` to determine the Effect object.
+--The position is the number indexing the effects in the bus.
+--@function [parent=#Bus] removeEffect
+--@param self
+--@param insertOrPosition The Element object or the position of the effect to be removed.
+
+-------------------------------------------------------------------------------
+--Function to remove an envelope point from the specified envelope.
+--You specify the envelope by calling ` getParameter`
+--with the EnvelopePoints parameter of the desired envelope as argument.
+--If you call ` getParameter` with the EnvelopePoints parameter as argument,
+--an array with the current envelope points will be returned.
+--Each index of the array represents an envelope point
+--with the fields ` .level`, ` .duration` and ` .curve`.
+--The ` removeEnvelopePoint` function modifies this array.
+--To apply the changes, you must use ` setParameter`
+--with the EnvelopePoints parameter of the envelope as argument
+--and the array as value.
+--@function [parent=#global] removeEnvelopePoint
+--@param #table envelopeArray An array with envelope points.
+--Each index of the array represents an envelope point
+--with the fields ` .level`, ` .duration` and ` .curve`.
+--To obtain the envelope array of an envelope, use ` getParameter`
+--with the EnvelopePoints parameter of the desired envelope as argument.
+--@param #number index The index of the point to be removed.
+
+-------------------------------------------------------------------------------
+--Function to remove an element in the Program Tree from the parent element.
+--The function can remove elements of the type Layer, Zone, MidiModule, Bus and Effect.
+--It can even remove the script module that calls the function.
+--@function [parent=#Element] removeFromParent
+--@param self
+
+-------------------------------------------------------------------------------
+--Function to remove a layer from the specified layer.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the layer that contains the layer to be removed.
+--The layer is determined by its Layer object or its position.
+--You can use ` getLayer` or ` findLayers` to determine the Layer object.
+--The position is the number indexing the layers within the specified layer.
+--@function [parent=#Layer] removeLayer
+--@param self
+--@param layerOrPosition The Layer object or the position of the layer to be removed.
+
+-------------------------------------------------------------------------------
+--Function to remove a MIDI module from the specified layer.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the layer that contains the MIDI module.
+--The MIDI module to be removed is determined by its MidiModule object or its position.
+--You can use ` getMidiModule` or ` findMidiModules` to determine the MidiModule object.
+--The position is the number that indexes the MIDI modules in the specified layer.
+--@function [parent=#Layer] removeMidiModule
+--@param self
+--@param moduleOrPosition The MidiModule object or the position of the MIDI module to be removed.
+
+-------------------------------------------------------------------------------
+--Function to remove a quick control assignment from the specified layer and quick control.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control with the assignment to be removed.
+--The assignment argument is the index of the quick control assignment to be removed.
+--The indices of the quick controls and the assignments both start counting from 1.
+--@function [parent=#Layer] removeQCAssignment
+--@param self
+--@param #number qc The index of the quick control with the assignment to be removed.
+--@param #number assignment The index of the quick control assignment to be removed.
+
+-------------------------------------------------------------------------------
+--Function to remove a zone from the specified layer.
+--For example, ` this.parent` specifies the parent layer of the script module
+--as the layer that contains the zone.
+--The zone to be removed is determined by its Zone object or its position.
+--You can use ` getZone` or ` findZones` to determine the Zone object.
+--The position is the number that indexes the zones in the specified layer.
+--@function [parent=#Layer] removeZone
+--@param self
+--@param zoneOrPosition The Zone object or position of the zone to be removed.
+
+-------------------------------------------------------------------------------
+--Executes a function in the controller thread.
+--By calling runAsync in the processor thread,
+--you can invoke a function that is executed in the controller thread.
+--The execution of runAsync takes at least one audio block,
+--or longer, depending on the function which was called.
+--The callback which called runAsync is put on hold until the function has completed.
+--Please be aware of this when using runAsync.
+--@function [parent=#global] runAsync
+--@param func The name of the function to be called.
+--@param ... The arguments of the function. Optional.
+
+-------------------------------------------------------------------------------
+--Executes a function in the processor thread.
+--By calling runSync in the controller thread,
+--you can invoke a function that is executed in the processor thread.
+--For example, by calling runSync in a parameter change callback,
+--you can invoke an event function like playNote, releaseVoice, controlChange, etc.
+--The callback that called runSync is not stopped and continues its execution.
+--The specified function will be exectued in the next audio block.
+--If id is specified, another call to runSync with the same ID
+--overwrites the previous function if it has not been executed yet.
+--Only the last function with the same ID will be executed in the next audio block.
+--@function [parent=#global] runSync
+--@param func The name of the function to be called.
+--@param id If this is specified, another call to runSync with the same ID
+--overwrites the previous function if it has not been executed yet.
+--Only the last function with the same ID will be executed in the next audio block. Optional.
+
+-------------------------------------------------------------------------------
+--Function to convert a number of samples to the equivalent duration in milliseconds.
+--The sample rate at which the plug-in runs is taken into account.
+--@function [parent=#global] samples2ms
+--@param #number samples The number of samples.
+--@return Returns the specified number of samples as duration in milliseconds.
+
+-------------------------------------------------------------------------------
+--Function to change the name of an element in the Program Tree.
+--@function [parent=#Element] setName
+--@param self
+--@param #string name The new name for the element.
+
+-------------------------------------------------------------------------------
+--Function to assign the output of a zone or bus to the specified output bus.
+--The sending zone or bus is determined by its Element object.
+--The receiving output bus is specified by its Bus object.
+--Setting the output bus to ` nil` enables the default signal routing for the zone or bus.
+--@function [parent=#Bus] setOutputBus
+--@param self
+--@param bus The Bus object of the bus that you want to assign, or ` nil`.
+
+-------------------------------------------------------------------------------
+--Function to assign the output of a zone or bus to the specified output bus.
+--The sending zone or bus is determined by its Element object.
+--The receiving output bus is specified by its Bus object.
+--Setting the output bus to ` nil` enables the default signal routing for the zone or bus.
+--@function [parent=#Zone] setOutputBus
+--@param self
+--@param bus The Bus object of the bus that you want to assign, or ` nil`.
+
+-------------------------------------------------------------------------------
+--Function to set the value of a parameter.
+--The parameter can be determined by name or ID.
+--The function will have no effect if the parameter does not exist.
+--@function [parent=#Element] setParameter
+--@param self
+--@param nameOrID The name or ID of the parameter.
+--@param value The value that you want to set.
+--The new value must match the data type of the parameter.
+
+-------------------------------------------------------------------------------
+--Function to set the value of a parameter in the normalized range from 0 to 1.0.
+--The parameter can be determined by name or ID.
+--This function has no effect if the parameter does not exist
+--or if the value is of the type string.
+--@function [parent=#Element] setParameterNormalized
+--@param self
+--@param nameOrID The name or ID of the parameter.
+--@param #number value The value you want to set in the normalized range from 0 to 1.0.
+
+-------------------------------------------------------------------------------
+--Function to set a program in the specified slot of the Program Table
+--or the Slot Rack of the plug-in instance.
+--Before calling this function,
+--you must access the Instance object with ` this.program.instance`.
+--The program is determined by its Program object.
+--To specify the slot in the Program Table, you must use the index argument.
+--To specify the slot in the Slot Rack, you must use a Slot object, for example, via ` getSlot`.
+--The program can be removed from the Slot Rack by using ` nil` as argument.
+--@function [parent=#Instance] setProgram
+--@param self
+--@param programOrNil The Program object of the program.
+--Programs can be removed from the Slot Rack by using ` nil`.
+--@param #number index The index of the slot in the Program Table
+--where you want to set the program. Optional
+
+-------------------------------------------------------------------------------
+--Function to set a program in the specified slot of the Program Table
+--or the Slot Rack of the plug-in instance.
+--Before calling this function,
+--you must access the Instance object with ` this.program.instance`.
+--The program is determined by its Program object.
+--To specify the slot in the Program Table, you must use the index argument.
+--To specify the slot in the Slot Rack, you must use a Slot object, for example, via ` getSlot`.
+--The program can be removed from the Slot Rack by using ` nil` as argument.
+--@function [parent=#Slot] setProgram
+--@param self
+--@param programOrNil The Program object of the program.
+--Programs can be removed from the Slot Rack by using ` nil`.
+--@param #number index The index of the slot in the Program Table
+--where you want to set the program. Optional
+
+-------------------------------------------------------------------------------
+--Function to set the bypass state of the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment.
+--The indices of the quick controls and the assignments both start counting from 1.
+--The  bypass argument sets the bypass state of the quick control assignment.
+--@function [parent=#Layer] setQCAssignmentBypass
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@param #boolean bypass The bypass state to be set.
+
+-------------------------------------------------------------------------------
+--Function to set the curve value of the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment.
+--The indices of the quick controls and the assignments both start counting from 1.
+--The curve argument sets the curve value of the quick control assignment.
+--@function [parent=#Layer] setQCAssignmentCurve
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@param #number curve The curve value in the range -100 % to +100 %.
+
+-------------------------------------------------------------------------------
+--Function to set the maximum value of the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment.
+--The indices of the quick controls and the assignments both start counting from 1.
+--The max argument sets the maximum value of the quick control assignment.
+--@function [parent=#Layer] setQCAssignmentMax
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@param #number max The maximum value to be set.
+--The value range of the maximum value is always 0 to 100 %,
+--even if the type of the quick control assignment is set to Relative or Switch Relative.
+
+-------------------------------------------------------------------------------
+--Function to set the minimum value of the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment.
+--The indices of the quick controls and the assignments both start counting from 1.
+--The min argument sets the minimum value of the quick control assignment.
+--@function [parent=#Layer] setQCAssignmentMin
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@param #number min The minimum value to be set.
+--The value range of the minimum value is always 0 to 100 %,
+--even if the type of the quick control assignment is set to Relative or Switch Relative.
+
+-------------------------------------------------------------------------------
+--Function to set the mode of the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment.
+--The indices of the quick controls and the assignments both start counting from 1.
+--The mode argument sets the mode of the quick control assignment.
+--@function [parent=#Layer] setQCAssignmentMode
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@param mode The mode to be set. It can be determined via names or indices.
+--
+--Enumerator to identify the different quick control assignment modes:
+--
+--* 1 QCAssignmentMode.absolute
+--* 2 QCAssignmentMode.relative
+--* 3 QCAssignmentMode.switch
+--* 4 QCAssignmentMode.switchRelative
+
+-------------------------------------------------------------------------------
+--Function to set the parameter ID for connecting the corresponding parameter
+--to the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment.
+--The indices of the quick controls and the assignments both start counting from 1.
+--The paramID argument selects the parameter to be connected with the quick control assignment.
+--@function [parent=#Layer] setQCAssignmentParamId
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@param #number paramID The ID of the parameter to be connected.
+
+-------------------------------------------------------------------------------
+--Function to set the scope for the specified quick control assignment.
+--The quick control assignment is determined by the Layer object,
+--the index of the quick control and the index of the assignment itself.
+--For example, ` this.parent` defines the parent layer of the script module
+--as the layer that contains the quick control.
+--The qc argument is the index of the quick control
+--and the assignment argument is the index of the assignment.
+--The indices of the quick controls and the assignments both start counting from 1.
+--The scope is defined by the Element object that you assign to the scope argument.
+--@function [parent=#Layer] setQCAssignmentScope
+--@param self
+--@param #number qc The index of the quick control.
+--@param #number assignment The index of the quick control assignment.
+--@param #Element scope The Element  object to be used as scope.
+
+-------------------------------------------------------------------------------
+--Function to specify the maximum allowed execution time of a function call in the script.
+--If the execution of a function call exceeds the execution time-out,
+--the script will end with an execution error.
+--This prevents the infinite execution of scripts, e.g., in case of an infinite loop.
+--The script execution time-out can be defined separately for the controller and the processor thread.
+--Which execution time-out is set, depends on where setScriptExecTimeOut is called.
+--The duration for the script execution time-out is specified in milliseconds.
+--The default is 5000 ms for the controller thread and 1000 ms for the processor thread.
+--@function [parent=#global] setScriptExecTimeOut
+--@param #number duration The duration for the script execution time-out in milliseconds.
+
+-------------------------------------------------------------------------------
+--Function to set the 1st modulation source of a row in the modulation matrix.
+--The row is specified with the Zone object of the zone
+--and the index of the modulation matrix row.
+--@function [parent=#ModulationMatrixRow] setSource1
+--@param self
+--@param source The modulation source. It can be determined via names or indices.
+--@param sourceInfo1 Optional argument to specify the MIDI controller number or the MIDI module, for example.
+--@param sourceInfo2 Optional argument to select the modulation output of a MIDI module, for example.
+
+-------------------------------------------------------------------------------
+--Function to set the 2nd modulation source of a row in the modulation matrix.
+--The row is specified with the Zone object of the zone
+--and the index of the modulation matrix row.
+--@function [parent=#ModulationMatrixRow] setSource2
+--@param self
+--@param source The modulation source. It can be determined via names or indices.
+--@param sourceInfo1 Optional argument to specify the MIDI controller number or the MIDI module, for example.
+--@param sourceInfo2 Optional argument to select the modulation output of a MIDI module, for example.
+
+-------------------------------------------------------------------------------
+--Function to sort the events of the specified events table according to their PPQ position.
+--The function sorts the events from first to last PPQ position.
+--The events table is part of a tracks table which is part of the MIDI sequence table.
+--@function [parent=#global] sortEvents
+--@param #table eventsTable The table record referencing the events table.
+
+-------------------------------------------------------------------------------
+--Calls a Lua function and executes it in a separate, parallel thread.
+--@function [parent=#global] spawn
+--@param func The name of the function to be called.
+--@param ... The arguments of the function. Optional.
+
+-------------------------------------------------------------------------------
+--Function to combine multiple undo entries into one undo block.
+--For example, if your script inserts several elements into the program,
+--you might want to be able to remove all the elements in one single undo operation.
+--The function returns an ID for identifying the undo block.
+--This ID can be used as second argument in later calls to ` startUndoBlock`
+--for combining the undo blocks that refer to this ID.
+--The name argument will be used as entry in the undo history.
+--If multiple undo blocks are combined, only the name of the last undo block will be used.
+--This function must be terminated using ` endUndoBlock`.
+--If startUndoBlock is called within a callback function,
+--` endUndoBlock` is called automatically when the callback function ends.
+--@function [parent=#global] startUndoBlock
+--@param #string name This will be displayed as entry in the undo history.
+--@param #number id Set this to combine the undo blocks that refer to this ID.
+--@return Returns an ID that can be used to identify the undo block.
+
+-------------------------------------------------------------------------------
+--Function to suspend the execution of a callback for a specific time in milliseconds.
+--@function [parent=#global] wait
+--@param #number ms Time in ms
+
+-------------------------------------------------------------------------------
+--Function to suspend the execution of a callback for a specific time.
+--This time is specified in number of beats.
+--One beat equals the length of a quarter note based on the current tempo.
+--@function [parent=#global] waitBeat
+--@param #number beats Time in number of quarter notes and fractions of it.
+
+-------------------------------------------------------------------------------
+--Function to suspend the execution of the onNote callback
+--until the note that called ` onNote` gets released
+--either by a corresponding note-off or sustain pedal off.
+--@function [parent=#global] waitForRelease
+
+-------------------------------------------------------------------------------
+--Function to write a MIDI file (.mid) to disk.
+--@function [parent=#global] writeMidiFile
+--@param #string path The path and file name of the MIDI file.
+--@param #table midiSequence The MIDI sequence table that contains the data.
+--The structure of the table is defined in the MIDI Sequence Table.
+--@return Returns ` true` if the MIDI file was written successfully
+--and ` false` if not.
+
+return nil
